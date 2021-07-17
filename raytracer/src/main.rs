@@ -1,9 +1,7 @@
-#[allow(clippy::float_cmp)]
-mod vec3;
+mod basic;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
-
-pub use vec3::Vec3;
+pub use basic::Vec3;
 
 fn main() {
     let x = Vec3::new(1.0, 1.0, 1.0);
