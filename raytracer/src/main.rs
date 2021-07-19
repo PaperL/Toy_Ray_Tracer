@@ -50,7 +50,7 @@ fn main() {
     //========================================================
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 512;
+    let image_width = 1920;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
     let samples_per_pixel = 100;
@@ -149,7 +149,7 @@ fn main() {
     bar.finish();
     println!("Generating Image...\tDone.");
     print!("Outputing File...\t");
-    img.save("output/test.png").unwrap();
+    img.save("output/output.png").unwrap();
     println!("Done.");
     //========================================================
 }

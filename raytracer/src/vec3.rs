@@ -86,6 +86,8 @@ impl Vec3 {
     pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
         (*v) - (*n) * Vec3::dot(&v, &n) * 2.0
     }
+
+    
 }
 
 impl RGBColor {

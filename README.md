@@ -4,10 +4,11 @@
 
 - 上海交通大学，2020级ACM班，PaperL
 - 2020-2021学年暑期小学期，PPCA课程项目
-- **使用 Rust 编写简单的光线追踪程序**
+- **初步掌握Rust语言**
+- **学习光线追踪入门知识**
 
 
 
 ## 当前Commit运行结果
 
-![Output](output/test.png)
+![Output](output/preview.png)
