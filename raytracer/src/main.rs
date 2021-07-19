@@ -50,7 +50,7 @@ fn main() {
     //========================================================
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 200;
+    let image_width = 1920;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
     let samples_per_pixel = 100;
@@ -84,7 +84,7 @@ fn main() {
             y: 0.6,
             z: 0.2,
         },
-        fuzz: 1.0,
+        fuzz: 0.0,
     });
 
     world.add(Sphere::new(
@@ -104,7 +104,7 @@ fn main() {
     ));
     world.add(Sphere::new(
         Point3::new(-1.0, 0.0, -1.0),
-        -0.4,
+        -0.45,
         material_left,
     ));
     world.add(Sphere::new(
@@ -115,7 +115,13 @@ fn main() {
 
     //========================================================
     // Camera
-    let cam = Camera::new();
+    let cam = Camera::new(
+        Point3::new(-2.0, 2.0, 1.0),
+        Point3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        25.0,
+        aspect_ratio,
+    );
 
     println!("Done.");
 

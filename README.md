@@ -9,6 +9,8 @@
 
 
 
-## 当前Commit运行结果
+## 当前Commit运行结果预览图
 
 ![Output](output/preview.png)
+
+- 高清渲染图见 Actions - Artifacts
