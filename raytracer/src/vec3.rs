@@ -81,6 +81,17 @@ impl Vec3 {
         return if Vec3::dot(&p, &*normal) > 0.0 { p } else { -p };
     }
 
+    pub fn rand_in_unit_disk() -> Vec3 {
+        let mut rnd: ThreadRng = rand::thread_rng();
+        Vec3 {
+            x: rnd.gen_range(-1.0..1.0),
+            y: rnd.gen_range(-1.0..1.0),
+            z: 0.0,
+        }
+        .unit_vector()
+            * random::<f64>()
+    }
+
     pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
         (*v) - (*n) * Vec3::dot(&v, &n) * 2.0
     }
