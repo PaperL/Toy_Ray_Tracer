@@ -33,7 +33,8 @@ jobs:
         name: Lint with Clippy 🔧
         with:
           command: clippy
-          args: --all-targets --all-features -- -D warnings
+          args: --all-targets --all-features
+          # args: --all-targets --all-features -- -D warnings # treat warning as error
   build:
     name: Build and Upload
     runs-on: ubuntu-latest

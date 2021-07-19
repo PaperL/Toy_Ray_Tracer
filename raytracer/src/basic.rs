@@ -5,8 +5,37 @@ use std::{
 
 const PI: f64 = 3.1415926535897932385;
 
+const FLOAT_ERROR: f64 = 0.0000001;
+
+// pub unsafe fn rand_1()->f64{
+//     static mut rnd: ThreadRng = rand::thread_rng();
+//     rnd.gen()
+// }
+
 fn degree_to_radian(degree: f64) -> f64 {
     degree * PI / 180.0
+}
+
+// open interval clamp
+fn clamp_oi(x: f64, min: f64, max: f64) -> f64 {
+    if x < min {
+        return min;
+    };
+    if x > max {
+        return max;
+    };
+    x
+}
+
+// half-open interval clamp (left-closed and right-open)
+fn clamp_hoi(x: f64, min: f64, max: f64) -> f64 {
+    if x < min {
+        return min;
+    };
+    if x > max {
+        return max - FLOAT_ERROR;
+    };
+    x
 }
 
 //====================================================
@@ -54,6 +83,14 @@ impl Vec3 {
 impl RGBColor {
     pub fn to_u8_array(&self) -> [u8; 3] {
         [self.x as u8, self.y as u8, self.z as u8]
+    }
+
+    pub fn calc_color(&mut self, samples_per_pixel: u32) -> &Self {
+        let scale = 1.0 / samples_per_pixel as f64;
+        self.x = clamp_hoi(self.x * scale * 256.0, 0.0, 256.0);
+        self.y = clamp_hoi(self.y * scale * 256.0, 0.0, 256.0);
+        self.z = clamp_hoi(self.z * scale * 256.0, 0.0, 256.0);
+        self
     }
 }
 
@@ -227,8 +264,7 @@ impl DivAssign<f64> for Vec3 {
 
 //====================================================
 
-#[cfg(test)]
-mod tests {
-
-    fn test() {}
-}
+// #[cfg(test)]
+// mod tests {
+//     fn test() {}
+// }

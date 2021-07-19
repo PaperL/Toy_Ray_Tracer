@@ -1,3 +1,4 @@
+use rand::Rng;
 use std::f64::INFINITY;
 
 use image::{ImageBuffer, RgbImage};
@@ -5,25 +6,15 @@ use indicatif::ProgressBar;
 
 mod basic;
 pub use basic::{Point3, RGBColor, Vec3};
+
 mod ray;
 use ray::Ray;
+
 mod hittable;
-use hittable::{HitRecord, HittableList};
+use hittable::{HitRecord, HittableList, Sphere};
 
-use crate::hittable::Sphere;
-
-// fn hit_sphere(center: Point3, radius: f64, ray: Ray) -> f64 {
-//     let oc = ray.orig - center.clone();
-//     let a = ray.dir.length_squared();
-//     let half_b = Vec3::dot(oc, ray.dir);
-//     let c = oc.length_squared() - radius * radius;
-//     let discriminant = half_b * half_b - a * c;
-//     if discriminant < 0.0 {
-//         return -1.0;
-//     } else {
-//         return (-half_b - discriminant.sqrt()) / a;
-//     }
-// }
+mod camera;
+use camera::Camera;
 
 fn ray_color(ray: Ray, world: &HittableList) -> RGBColor {
     let mut rec: HitRecord = Default::default();
@@ -44,42 +35,38 @@ fn main() {
     let image_width = 1920;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
+    let samples_per_pixel = 100;
 
     // World
-    let mut world: HittableList = Default::default();
+    let mut world = HittableList::default();
     let s1 = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
     let s2 = Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0);
     world.add(&s1);
     world.add(&s2);
 
     // Camera
-    let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Point3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_height, 0.0);
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0.0, 0.0, focal_length);
+    let cam = Camera::new();
 
     println!("Done.");
     //========================================================
-    println!("Rendering Progress:");
+    println!("Rendering Progress(Number of Line):");
     let bar = ProgressBar::new(image_height as u64);
+    // bar.set_style(ProgressStyle::default_spinner());
+    // bar.tick();
 
+    let mut rnd = rand::thread_rng();
     for y in 0..image_height {
         for x in 0..image_width {
-            let u = x as f64 / (image_width - 1) as f64;
-            let v = y as f64 / (image_height - 1) as f64;
-            let r = Ray::new(
-                origin,
-                lower_left_corner + (horizontal * u) + (vertical * v) - origin,
-            );
-            let pixel_color = ray_color(r, &world);
+            let mut pixel_color = RGBColor::default();
+            for _i in 0..samples_per_pixel {
+                let u = (x as f64 + rnd.gen::<f64>()) / (image_width - 1) as f64;
+                let v = (y as f64 + rnd.gen::<f64>()) / (image_height - 1) as f64;
+                let ray = cam.get_ray(u, v);
+                pixel_color += ray_color(ray, &world)
+            }
 
             let pixel = img.get_pixel_mut(x, image_height - y - 1);
-            *pixel = image::Rgb((pixel_color * 255.99999).to_u8_array());
+            *pixel = image::Rgb(pixel_color.calc_color(samples_per_pixel).to_u8_array());
         }
         bar.inc(1);
     }
