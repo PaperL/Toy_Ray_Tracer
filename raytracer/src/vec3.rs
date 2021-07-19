@@ -1,12 +1,10 @@
+pub use rand::{prelude::ThreadRng, random, Rng};
 pub use std::{
     fmt::{Debug, Display},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-pub use rand::{prelude::ThreadRng, random, Rng};
 
-use crate::basic::{INFINITESIMAL,clamp_hoi};
-
-
+use crate::basic::{clamp_hoi, INFINITESIMAL};
 
 pub type RGBColor = Vec3;
 pub type Point3 = Vec3;
@@ -87,7 +85,13 @@ impl Vec3 {
         (*v) - (*n) * Vec3::dot(&v, &n) * 2.0
     }
 
-    
+    pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = f64::min(Vec3::dot(&-(*uv), n), 1.0);
+        let r_out_perp = ((*uv) + (*n) * cos_theta) * etai_over_etat;
+        let r_out_parallel = -(*n) * (1.0 - r_out_perp.length_squared()).abs().sqrt();
+
+        r_out_perp + r_out_parallel
+    }
 }
 
 impl RGBColor {

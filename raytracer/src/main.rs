@@ -21,7 +21,7 @@ mod camera;
 use camera::Camera;
 
 mod material;
-use crate::material::{Lambertian, Metal};
+use crate::material::{Dielectric, Lambertian, Metal};
 
 fn ray_color(ray: &Ray, world: &HittableList, depth: i32) -> RGBColor {
     if depth <= 0 {
@@ -50,7 +50,7 @@ fn main() {
     //========================================================
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    let image_width = 1920;
+    let image_width = 200;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
     let samples_per_pixel = 100;
@@ -70,20 +70,13 @@ fn main() {
 
     let material_center = Rc::new(Lambertian {
         albedo: RGBColor {
-            x: 0.7,
-            y: 0.3,
-            z: 0.3,
+            x: 0.1,
+            y: 0.2,
+            z: 0.5,
         },
     });
 
-    let material_left = Rc::new(Metal {
-        albedo: RGBColor {
-            x: 0.8,
-            y: 0.8,
-            z: 0.8,
-        },
-        fuzz: 0.3,
-    });
+    let material_left = Rc::new(Dielectric { ir: 1.5 });
 
     let material_right = Rc::new(Metal {
         albedo: RGBColor {
@@ -107,6 +100,11 @@ fn main() {
     world.add(Sphere::new(
         Point3::new(-1.0, 0.0, -1.0),
         0.5,
+        material_left.clone(),
+    ));
+    world.add(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        -0.4,
         material_left,
     ));
     world.add(Sphere::new(
