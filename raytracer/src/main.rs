@@ -135,7 +135,7 @@ fn main() {
     //========================================================
     // Image
     let aspect_ratio = 16. / 9.;
-    let image_width = 400;
+    let image_width = 1920;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
     let samples_per_pixel = 100;
