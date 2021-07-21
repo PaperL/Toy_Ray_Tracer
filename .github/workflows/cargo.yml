@@ -3,9 +3,7 @@ name: CI # Continuous Integration
 on:
   push:
     tags:
-      - "v0.3.0-alpha"
-    branches:
-      - master
+      - "v*"
 
 jobs:
   lint:
@@ -66,6 +64,8 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
+          # github.ref is tag when trigger is tag
+          # or can use ${{ steps.get_version.outputs.VERSION }}
           body: |
             Ray Tracing in One Weekend: Book2
           draft: false
@@ -77,8 +77,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/
-          asset_name: Output.png
+          asset_path: output/output.png
+          asset_name: output.png
           asset_content_type: image/png
           # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
       # - uses: softprops/action-gh-release@v1
