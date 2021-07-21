@@ -3,7 +3,7 @@ name: CI # Continuous Integration
 on:
   push:
     tags:
-      - "v0.3.0"
+      - "v0.3.0-alpha"
     branches:
       - master
   pull_request:

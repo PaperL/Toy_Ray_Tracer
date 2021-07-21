@@ -6,3 +6,9 @@
 - 2020-2021学年暑期小学期，PPCA课程项目
 - **初步掌握Rust语言**
 - **学习光线追踪入门知识**
+
+## 当前Commit运行结果预览图
+
+![Output](output/preview.png)
+
+- 高清渲染图见 Actions - Artifacts
