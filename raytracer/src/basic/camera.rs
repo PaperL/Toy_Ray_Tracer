@@ -1,4 +1,6 @@
-use crate::{basic::degree_to_radian, ray::Ray, Point3, Vec3};
+use super::degree_to_radian;
+use super::ray::Ray;
+use super::vec3::{Point3, Vec3};
 
 pub struct Camera {
     orig: Point3,
@@ -22,8 +24,8 @@ impl Camera {
         focus_dist: f64,
     ) -> Self {
         let theta = degree_to_radian(vfov);
-        let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h;
+        let h = (theta / 2.).tan();
+        let viewport_height = 2. * h;
         let viewport_width = aspect_ratio * viewport_height;
 
         let w = (look_from - look_at).unit_vector();
@@ -33,7 +35,7 @@ impl Camera {
         let orig = look_from;
         let horizontal = u * viewport_width * focus_dist;
         let vertical = v * viewport_height * focus_dist;
-        let lower_left_corner = orig - horizontal / 2.0 - vertical / 2.0 - w * focus_dist;
+        let lower_left_corner = orig - horizontal / 2. - vertical / 2. - w * focus_dist;
 
         Self {
             orig,
@@ -43,7 +45,7 @@ impl Camera {
             u,
             v,
             w,
-            lens_radius: aperture / 2.0,
+            lens_radius: aperture / 2.,
         }
     }
 

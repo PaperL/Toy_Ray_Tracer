@@ -4,7 +4,7 @@ pub use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use crate::basic::{clamp_hoi, INFINITESIMAL};
+use super::{clamp_hoi, INFINITESIMAL};
 
 pub type RGBColor = Vec3;
 pub type Point3 = Vec3;
@@ -69,16 +69,16 @@ impl Vec3 {
     }
 
     pub fn rand_unit() -> Self {
-        Vec3::rand(-1.0, 1.0).unit_vector()
+        Vec3::rand(-1., 1.).unit_vector()
     }
 
     pub fn rand_in_unit_sphere() -> Self {
-        Vec3::rand(-1.0, 1.0).unit_vector() * random::<f64>()
+        Vec3::rand(-1., 1.).unit_vector() * random::<f64>()
     }
 
     pub fn rand_in_unit_hemisphere(normal: &Vec3) -> Self {
-        let p = Vec3::rand(-1.0, 1.0).unit_vector() * random::<f64>();
-        return if Vec3::dot(&p, &*normal) > 0.0 { p } else { -p };
+        let p = Vec3::rand(-1., 1.).unit_vector() * random::<f64>();
+        return if Vec3::dot(&p, &*normal) > 0. { p } else { -p };
     }
 
     pub fn rand_in_unit_disk() -> Vec3 {
@@ -86,20 +86,20 @@ impl Vec3 {
         Vec3 {
             x: rnd.gen_range(-1.0..1.0),
             y: rnd.gen_range(-1.0..1.0),
-            z: 0.0,
+            z: 0.,
         }
         .unit_vector()
             * random::<f64>()
     }
 
     pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-        (*v) - (*n) * Vec3::dot(&v, &n) * 2.0
+        (*v) - (*n) * Vec3::dot(&v, &n) * 2.
     }
 
     pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
-        let cos_theta = f64::min(Vec3::dot(&-(*uv), n), 1.0);
+        let cos_theta = f64::min(Vec3::dot(&-(*uv), n), 1.);
         let r_out_perp = ((*uv) + (*n) * cos_theta) * etai_over_etat;
-        let r_out_parallel = -(*n) * (1.0 - r_out_perp.length_squared()).abs().sqrt();
+        let r_out_parallel = -(*n) * (1. - r_out_perp.length_squared()).abs().sqrt();
 
         r_out_perp + r_out_parallel
     }
@@ -111,10 +111,10 @@ impl RGBColor {
     }
 
     pub fn calc_color(&mut self, samples_per_pixel: u32) -> &Self {
-        let scale = 1.0 / samples_per_pixel as f64;
-        self.x = clamp_hoi((self.x * scale).sqrt() * 256.0, 0.0, 256.0);
-        self.y = clamp_hoi((self.y * scale).sqrt() * 256.0, 0.0, 256.0);
-        self.z = clamp_hoi((self.z * scale).sqrt() * 256.0, 0.0, 256.0);
+        let scale = 1. / samples_per_pixel as f64;
+        self.x = clamp_hoi((self.x * scale).sqrt() * 256., 0., 256.);
+        self.y = clamp_hoi((self.y * scale).sqrt() * 256., 0., 256.);
+        self.z = clamp_hoi((self.z * scale).sqrt() * 256., 0., 256.);
         self
     }
 }

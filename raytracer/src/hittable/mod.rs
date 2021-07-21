@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
-use crate::{
+use super::{
+    basic::ray::Ray,
+    basic::vec3::{Point3, Vec3},
     material::Material,
-    ray::Ray,
-    vec3::{Point3, Vec3},
 };
 
 //=================================================
@@ -19,7 +19,7 @@ pub struct HitRecord {
 
 impl HitRecord {
     fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {
-        self.front_face = Vec3::dot(&ray.dir, &*outward_normal) < 0.0;
+        self.front_face = Vec3::dot(&ray.dir, &*outward_normal) < 0.;
         self.normal = if self.front_face {
             *outward_normal
         } else {
@@ -89,7 +89,7 @@ impl Hittable for Sphere {
         let c = oc.length_squared() - self.r.powi(2);
 
         let discriminant = half_b.powi(2) - (a * c);
-        if discriminant < 0.0 {
+        if discriminant < 0. {
             return None;
         }
         let sqrt_d = discriminant.sqrt();
