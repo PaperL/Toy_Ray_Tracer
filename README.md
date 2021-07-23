@@ -7,8 +7,27 @@
 - **初步掌握Rust语言**
 - **学习光线追踪入门知识**
 
+
+
+## Module Tree
+
+- main.rs
+  - basic
+    - vec3
+    - ray
+    - camera
+  - hittable
+    - sphere
+    - moving_sphere
+  - material
+    - lambertian
+    - metal
+    - dielectric
+
+
+
 ## 当前Commit运行结果预览图
 
 ![Output](output/preview.png)
 
-- 高清渲染图见 Actions - Artifacts
+> 高清渲染图见 Release

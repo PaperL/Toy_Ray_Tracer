@@ -1,3 +1,6 @@
+use rand::prelude::ThreadRng;
+use rand::Rng;
+
 use super::degree_to_radian;
 use super::ray::Ray;
 use super::vec3::{Point3, Vec3};
@@ -11,6 +14,8 @@ pub struct Camera {
     v: Vec3,
     w: Vec3,
     lens_radius: f64,
+    time: f64, // shutter open/close times
+    dur: f64,
 }
 
 impl Camera {
@@ -22,6 +27,8 @@ impl Camera {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
+        time: f64,
+        dur: f64,
     ) -> Self {
         let theta = degree_to_radian(vfov);
         let h = (theta / 2.).tan();
@@ -46,6 +53,8 @@ impl Camera {
             v,
             w,
             lens_radius: aperture / 2.,
+            time,
+            dur,
         }
     }
 
@@ -53,11 +62,13 @@ impl Camera {
         let rd = Vec3::rand_in_unit_disk() * self.lens_radius;
         let offset = self.u * rd.x + self.v * rd.y;
 
+        let mut rnd: ThreadRng = rand::thread_rng();
         Ray {
             orig: self.orig + offset,
             dir: self.lower_left_corner + self.horizontal * s + self.vertical * t
                 - self.orig
                 - offset,
+            tm: rnd.gen_range(self.time..(self.time + self.dur)),
         }
     }
 }
