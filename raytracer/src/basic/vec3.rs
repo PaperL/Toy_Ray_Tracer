@@ -3,6 +3,7 @@ pub use std::{
     fmt::{Debug, Display},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use std::{ops::Index, usize};
 
 use super::{clamp_hoi, INFINITESIMAL};
 
@@ -128,6 +129,19 @@ impl Debug for Vec3 {
 impl Display for Vec3 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            1 => return &self.x,
+            2 => return &self.y,
+            3 => return &self.z,
+            _ => panic!("Try to get {}th dimension of Vec3.", index),
+        }
     }
 }
 

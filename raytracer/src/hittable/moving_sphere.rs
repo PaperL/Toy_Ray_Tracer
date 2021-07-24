@@ -1,9 +1,15 @@
 use super::{HitRecord, Hittable};
-use crate::basic::{
-    ray::Ray,
-    vec3::{Point3, Vec3},
+
+use crate::{
+    basic::{
+        ray::Ray,
+        vec3::{Point3, Vec3},
+    },
+    bvh::aabb::AABB,
+    material::Material,
 };
-use crate::material::Material;
+use std::f64::consts::PI;
+
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -40,6 +46,12 @@ impl MovingSphere {
     fn center(&self, tm: f64) -> Point3 {
         self.cen0 + (self.mov) * ((tm - self.tm0) / (self.dur))
     }
+
+    pub fn get_sphere_uv(p: Point3) -> (f64, f64) {
+        let theta = f64::acos(-p.y);
+        let phi = f64::atan2(-p.z, p.x) + PI;
+        (phi / (2. * PI), theta / PI)
+    }
 }
 
 impl Hittable for MovingSphere {
@@ -70,12 +82,30 @@ impl Hittable for MovingSphere {
             mat_ptr: self.mat_ptr.clone(),
             t: root,
             front_face: bool::default(),
+            u: 0.,
+            v: 0.,
         };
         // rec.t = root;
         // rec.p = ray.at(rec.t);
         let outward_normal = (rec.p - cen) / self.r;
         rec.set_face_normal(ray, &outward_normal);
+        let uv = Self::get_sphere_uv(outward_normal);
+        rec.u = uv.0;
+        rec.v = uv.1;
 
         Some(rec)
+    }
+
+    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {
+        Some(AABB::surrounding_box(
+            &AABB::new(
+                self.center(time) - Vec3::new(self.r, self.r, self.r),
+                self.center(time) + Vec3::new(self.r, self.r, self.r),
+            ),
+            &AABB::new(
+                self.center(time + dur) - Vec3::new(self.r, self.r, self.r),
+                self.center(time + dur) + Vec3::new(self.r, self.r, self.r),
+            ),
+        ))
     }
 }

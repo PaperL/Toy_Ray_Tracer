@@ -1,9 +1,13 @@
 use super::{HitRecord, Hittable};
-use crate::basic::{
-    ray::Ray,
-    vec3::{Point3, Vec3},
+use crate::{
+    basic::{
+        ray::Ray,
+        vec3::{Point3, Vec3},
+    },
+    bvh::aabb::AABB,
+    material::Material,
 };
-use crate::material::Material;
+use std::f64::consts::PI;
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -14,8 +18,14 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(cen: Point3, r: f64, mat_ptr: Rc<dyn Material>) -> Self {
-        Self { cen, r, mat_ptr }
+    // pub fn new(cen: Point3, r: f64, mat_ptr: Rc<dyn Material>) -> Self {
+    //     Self { cen, r, mat_ptr }
+    // }
+
+    pub fn get_sphere_uv(p: Point3) -> (f64, f64) {
+        let theta = f64::acos(-p.y);
+        let phi = f64::atan2(-p.z, p.x) + PI;
+        (phi / (2. * PI), theta / PI)
     }
 }
 
@@ -46,12 +56,22 @@ impl Hittable for Sphere {
             mat_ptr: self.mat_ptr.clone(),
             t: root,
             front_face: bool::default(),
+            u: 0.,
+            v: 0.,
         };
-        // rec.t = root;
-        // rec.p = ray.at(rec.t);
         let outward_normal = (rec.p - self.cen) / self.r;
         rec.set_face_normal(ray, &outward_normal);
+        let uv = Self::get_sphere_uv(outward_normal);
+        rec.u = uv.0;
+        rec.v = uv.1;
 
         Some(rec)
+    }
+
+    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {
+        Some(AABB::new(
+            self.cen - Vec3::new(self.r, self.r, self.r),
+            self.cen + Vec3::new(self.r, self.r, self.r),
+        ))
     }
 }

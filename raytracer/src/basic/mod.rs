@@ -2,13 +2,21 @@ pub mod camera;
 pub mod ray;
 pub mod vec3;
 
-pub const PI: f64 = 3.1415926535897932385;
+use std::f64::consts::PI;
 pub const INFINITESIMAL: f64 = 0.0000001;
 
 // pub fn rand_1()->f64{
 //     static mut RND: ThreadRng = rand::thread_rng();
 //     RND.gen()
 // }
+
+pub fn min_f64(x: f64, y: f64) -> f64 {
+    if x < y {
+        x
+    } else {
+        y
+    }
+}
 
 pub fn degree_to_radian(degree: f64) -> f64 {
     degree * PI / 180.

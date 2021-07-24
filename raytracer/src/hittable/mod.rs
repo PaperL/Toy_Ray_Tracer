@@ -3,9 +3,10 @@ pub mod sphere;
 
 use std::rc::Rc;
 
-use super::{
+use crate::{
     basic::ray::Ray,
     basic::vec3::{Point3, Vec3},
+    bvh::aabb::AABB,
     material::Material,
 };
 
@@ -13,6 +14,8 @@ use super::{
 
 pub trait Hittable {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
+
+    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB>;
 }
 
 //=================================================
@@ -24,6 +27,8 @@ pub struct HitRecord {
     pub mat_ptr: Rc<dyn Material>,
     pub t: f64,
     pub front_face: bool,
+    pub u: f64,
+    pub v: f64,
 }
 
 impl HitRecord {
@@ -66,5 +71,25 @@ impl Hittable for HittableList {
             }
         }
         rec
+    }
+
+    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {
+        if self.objects.is_empty() {
+            return None;
+        };
+
+        let mut tot_box = AABB::default();
+        let mut first_flag = true;
+        for item in &self.objects {
+            if let Some(tmp_box) = item.bounding_box(time, dur) {
+                if !first_flag {
+                    tot_box = AABB::surrounding_box(&tot_box, &tmp_box);
+                } else {
+                    tot_box = tmp_box;
+                    first_flag = false;
+                }
+            }
+        }
+        Some(tot_box)
     }
 }

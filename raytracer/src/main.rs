@@ -7,8 +7,10 @@ use indicatif::ProgressBar;
 use rand::{prelude::ThreadRng, random, Rng};
 
 pub mod basic;
+pub mod bvh;
 pub mod hittable;
 pub mod material;
+pub mod texture;
 
 use basic::INFINITESIMAL;
 use basic::{
@@ -20,6 +22,8 @@ use basic::{
 use hittable::{sphere::Sphere, Hittable, HittableList};
 
 use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
+
+use texture::{checker_texture::CheckerTexture, solid_color::SolidColor};
 
 //---------------------------------------------------------------------------------
 
@@ -48,12 +52,17 @@ fn ray_color(ray: &Ray, world: &HittableList, depth: i32) -> RGBColor {
     RGBColor::new(1., 1., 1.) * (1. - t) + Vec3::new(0.5, 0.7, 1.) * t
 }
 
+//---------------------------------------------------------------------------------
+
 fn random_scene() -> HittableList {
     let mut world = HittableList::default();
 
-    let material_ground = Rc::new(Lambertian {
-        albedo: RGBColor::new(0.5, 0.5, 0.5),
+    let checker = Rc::new(CheckerTexture {
+        odd: Rc::new(SolidColor::new(0.2, 0.3, 0.1)),
+        even: Rc::new(SolidColor::new(0.9, 0.9, 0.9)),
     });
+
+    let material_ground = Rc::new(Lambertian { albedo: checker });
     world.add(Sphere {
         cen: Point3::new(0., -1000., 0.),
         r: 1000.,
@@ -74,7 +83,9 @@ fn random_scene() -> HittableList {
                 let mat_dice = random::<f64>();
                 if mat_dice < 0.8 {
                     let sphere_material = Rc::new(Lambertian {
-                        albedo: RGBColor::rand_1(),
+                        albedo: Rc::new(SolidColor {
+                            color_value: RGBColor::rand_1(),
+                        }),
                     });
                     world.add(MovingSphere {
                         r: cen.y,
@@ -137,6 +148,30 @@ fn random_scene() -> HittableList {
     world
 }
 
+fn two_spheres() -> HittableList {
+    let mut objects = HittableList::default();
+
+    let checker = Rc::new(CheckerTexture {
+        odd: Rc::new(SolidColor::new(0.2, 0.3, 0.1)),
+        even: Rc::new(SolidColor::new(0.9, 0.9, 0.9)),
+    });
+
+    objects.add(Sphere {
+        cen: Point3::new(0., -10., 0.),
+        r: 10.,
+        mat_ptr: Rc::new(Lambertian {
+            albedo: checker.clone(),
+        }),
+    });
+    objects.add(Sphere {
+        cen: Point3::new(0., 10., 0.),
+        r: 10.,
+        mat_ptr: Rc::new(Lambertian { albedo: checker }),
+    });
+
+    objects
+}
+
 //---------------------------------------------------------------------------------
 fn main() {
     print!("Initlizing...\t\t");
@@ -152,13 +187,14 @@ fn main() {
 
     //========================================================
     // World
-    let world: HittableList = random_scene();
+    let world: HittableList = two_spheres();
 
     //========================================================
     // Camera
     let look_from = Point3::new(13., 2., 3.);
     let look_at = Point3::new(0., 0., 0.);
     let vup = Vec3::new(0., 1., 0.);
+    let vfov = 20.;
     let aperture = 0.1;
     let focus_dist = 10.;
 
@@ -166,7 +202,7 @@ fn main() {
         look_from,
         look_at,
         vup,
-        25.,
+        vfov,
         aspect_ratio,
         aperture,
         focus_dist,

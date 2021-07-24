@@ -1,12 +1,17 @@
-use crate::basic::{
-    ray::Ray,
-    vec3::{RGBColor, Vec3},
-};
+use std::rc::Rc;
+
 use crate::hittable::HitRecord;
 use crate::material::Material;
+use crate::{
+    basic::{
+        ray::Ray,
+        vec3::{RGBColor, Vec3},
+    },
+    texture::Texture,
+};
 
 pub struct Lambertian {
-    pub albedo: RGBColor,
+    pub albedo: Rc<dyn Texture>,
 }
 
 impl Material for Lambertian {
@@ -15,7 +20,7 @@ impl Material for Lambertian {
         if scatter_dir.is_zero() {
             scatter_dir = rec.normal;
         }
-        *attenuation = self.albedo;
+        *attenuation = self.albedo.value(rec.u, rec.v, rec.p);
 
         Some(Ray::new(rec.p, scatter_dir, r_in.tm))
     }

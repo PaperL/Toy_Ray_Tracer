@@ -19,10 +19,16 @@
   - hittable
     - sphere
     - moving_sphere
+  - bvh
+    - aabb
+    - bvh_node
   - material
     - lambertian
     - metal
     - dielectric
+  - texture
+    - solid_color
+    - checker_texture
 
 
 
