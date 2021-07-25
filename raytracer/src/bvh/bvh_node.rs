@@ -16,11 +16,11 @@ impl BvhNode {
         if let (Some(box_left), Some(box_right)) =
             (left.bounding_box(time, dur), right.bounding_box(time, dur))
         {
-            return Self {
+            Self {
                 left,
                 right,
                 aabb_box: AABB::surrounding_box(&box_left, &box_right),
-            };
+            }
         } else {
             panic!("No bounding box in BvhNode constructor.\n");
         }
@@ -48,25 +48,23 @@ impl BvhNode {
 
         let object_span = end - start;
         if object_span == 1 {
-            return Self::new(objects[start].clone(), objects[start].clone(), time, dur);
+            Self::new(objects[start].clone(), objects[start].clone(), time, dur)
         } else if object_span == 2 {
             match comparator(&objects[start], &objects[end - 1]) {
                 Ordering::Less => {
-                    return Self::new(objects[start].clone(), objects[end - 1].clone(), time, dur);
+                    Self::new(objects[start].clone(), objects[end - 1].clone(), time, dur)
                 }
-                _ => {
-                    return Self::new(objects[end - 1].clone(), objects[start].clone(), time, dur);
-                }
+                _ => Self::new(objects[end - 1].clone(), objects[start].clone(), time, dur),
             }
         } else {
             objects.sort_unstable_by(comparator);
             let mid = (start + end) / 2;
-            return Self::new(
+            Self::new(
                 Rc::new(Self::new_from_vec(src_objects, start, mid, time, dur)),
                 Rc::new(Self::new_from_vec(src_objects, mid, end, time, dur)),
                 time,
                 dur,
-            );
+            )
         }
     }
 
@@ -87,14 +85,14 @@ impl Hittable for BvhNode {
         t_max: f64,
     ) -> Option<crate::hittable::HitRecord> {
         if !self.aabb_box.hit(ray, t_min, t_max) {
-            return None;
+            None
         } else if let Some(hit_left) = self.left.hit(ray, t_min, t_max) {
-            return Some(hit_left);
+            Some(hit_left)
         } else if let Some(hit_right) = self.right.hit(ray, t_min, t_max) {
-            return Some(hit_right);
+            Some(hit_right)
         } else {
-            return None;
-        };
+            None
+        }
     }
 
     fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {

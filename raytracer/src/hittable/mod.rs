@@ -66,7 +66,7 @@ impl Hittable for HittableList {
 
         for i in &self.objects {
             if let Some(temp_rec) = i.hit(ray, t_min, closest_so_far) {
-                closest_so_far = temp_rec.t.clone();
+                closest_so_far = temp_rec.t;
                 rec = Some(temp_rec);
             }
         }

@@ -23,7 +23,9 @@ use hittable::{sphere::Sphere, Hittable, HittableList};
 
 use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
 
-use texture::{checker_texture::CheckerTexture, solid_color::SolidColor};
+use texture::{
+    checker_texture::CheckerTexture, image_texture::ImageTexture, solid_color::SolidColor,
+};
 
 //---------------------------------------------------------------------------------
 
@@ -36,7 +38,7 @@ fn ray_color(ray: &Ray, world: &HittableList, depth: i32) -> RGBColor {
     if let Some(rec) = world.hit(ray, INFINITESIMAL, INFINITY) {
         let mut attenuation = RGBColor::default();
         if let Some(scattered) = rec.mat_ptr.scatter(ray, &rec, &mut attenuation) {
-            if scattered.tm != tmp {
+            if (scattered.tm - tmp).abs() > INFINITESIMAL {
                 print!("ERRRR!!!!!!!!");
             }
             return ray_color(&scattered, world, depth - 1) * attenuation;
@@ -151,22 +153,22 @@ fn random_scene() -> HittableList {
 fn two_spheres() -> HittableList {
     let mut objects = HittableList::default();
 
-    let checker = Rc::new(CheckerTexture {
-        odd: Rc::new(SolidColor::new(0.2, 0.3, 0.1)),
-        even: Rc::new(SolidColor::new(0.9, 0.9, 0.9)),
-    });
+    let earth_texture = Rc::new(ImageTexture::new(&"texture/earth.jpg".to_string()));
 
     objects.add(Sphere {
-        cen: Point3::new(0., -10., 0.),
+        cen: Point3::new(0., -11., 0.),
         r: 10.,
-        mat_ptr: Rc::new(Lambertian {
-            albedo: checker.clone(),
+        mat_ptr: Rc::new(Metal {
+            albedo: RGBColor::new(0.5, 0.5, 0.6),
+            fuzz: 0.05,
         }),
     });
     objects.add(Sphere {
-        cen: Point3::new(0., 10., 0.),
-        r: 10.,
-        mat_ptr: Rc::new(Lambertian { albedo: checker }),
+        cen: Point3::new(0., 0.5, 0.),
+        r: 1.5,
+        mat_ptr: Rc::new(Lambertian {
+            albedo: earth_texture,
+        }),
     });
 
     objects

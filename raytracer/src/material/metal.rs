@@ -30,10 +30,10 @@ impl Material for Metal {
         );
         *attenuation = self.albedo;
 
-        return if Vec3::dot(&scattered.dir, &rec.normal) > 0. {
+        if Vec3::dot(&scattered.dir, &rec.normal) > 0. {
             Some(scattered)
         } else {
             None
-        };
+        }
     }
 }

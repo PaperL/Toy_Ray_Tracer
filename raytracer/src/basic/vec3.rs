@@ -79,7 +79,11 @@ impl Vec3 {
 
     pub fn rand_in_unit_hemisphere(normal: &Vec3) -> Self {
         let p = Vec3::rand(-1., 1.).unit_vector() * random::<f64>();
-        return if Vec3::dot(&p, &*normal) > 0. { p } else { -p };
+        if Vec3::dot(&p, &*normal) > 0. {
+            p
+        } else {
+            -p
+        }
     }
 
     pub fn rand_in_unit_disk() -> Vec3 {
@@ -107,7 +111,7 @@ impl Vec3 {
 }
 
 impl RGBColor {
-    pub fn to_u8_array(&self) -> [u8; 3] {
+    pub fn to_u8_array(self) -> [u8; 3] {
         [self.x as u8, self.y as u8, self.z as u8]
     }
 
@@ -137,9 +141,9 @@ impl Index<usize> for Vec3 {
 
     fn index(&self, index: usize) -> &Self::Output {
         match index {
-            1 => return &self.x,
-            2 => return &self.y,
-            3 => return &self.z,
+            1 => &self.x,
+            2 => &self.y,
+            3 => &self.z,
             _ => panic!("Try to get {}th dimension of Vec3.", index),
         }
     }
