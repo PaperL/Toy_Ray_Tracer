@@ -1,16 +1,15 @@
-use std::f64::INFINITY;
-use std::rc::Rc;
-
-use hittable::moving_sphere::MovingSphere;
-use image::{ImageBuffer, RgbImage};
-use indicatif::ProgressBar;
-use rand::{prelude::ThreadRng, random, Rng};
-
 pub mod basic;
 pub mod bvh;
 pub mod hittable;
 pub mod material;
 pub mod texture;
+
+use std::f64::INFINITY;
+use std::rc::Rc;
+
+use image::{ImageBuffer, RgbImage};
+use indicatif::ProgressBar;
+use rand::{prelude::ThreadRng, random, Rng};
 
 use basic::INFINITESIMAL;
 use basic::{
@@ -19,16 +18,17 @@ use basic::{
     vec3::{Point3, RGBColor, Vec3},
 };
 
-use hittable::{sphere::Sphere, Hittable, HittableList};
+use hittable::{
+    moving_sphere::MovingSphere, rectangle::Rectangle, sphere::Sphere, Hittable, HittableList,
+};
 
-use material::{dielectric::Dielectric, lambertian::Lambertian, metal::Metal};
+use material::{
+    dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, metal::Metal,
+};
 
 use texture::{
     checker_texture::CheckerTexture, image_texture::ImageTexture, solid_color::SolidColor,
 };
-
-use crate::hittable::rectangle::XYRectangle;
-use crate::material::diffuse_light::DiffuseLight;
 
 //---------------------------------------------------------------------------------
 
@@ -189,23 +189,67 @@ fn simple_dark() -> HittableList {
     });
     objects.add(Sphere {
         cen: Point3::new(0., 2., 0.),
-        r: 2.,
+        r: 1.7,
         mat_ptr: Rc::new(Lambertian {
             albedo: earth_texture,
         }),
     });
 
-    // let light_texture = Rc::new(DiffuseLight::new_from_color(RGBColor::new(4., 4., 4.)));
-    let light_texture = Rc::new(DiffuseLight::new_from_color(RGBColor::new(4., 4., 4.1)));
+    let light_texture = Rc::new(DiffuseLight::new_from_color(RGBColor::new(4., 4., 4.3)));
 
-    objects.add(XYRectangle {
-        x0: -2.,
-        x1: 2.,
-        y0: 1.,
-        y1: 3.,
-        k: -4.,
-        mat_ptr: light_texture,
+    objects.add(Rectangle::new(
+        0,
+        -1.5,
+        1.5,
+        1.,
+        3.,
+        -4.,
+        light_texture.clone(),
+    ));
+    objects.add(Rectangle::new(
+        1,
+        1.,
+        3.,
+        -1.5,
+        1.5,
+        -4.,
+        light_texture.clone(),
+    ));
+    objects.add(Rectangle::new(
+        2,
+        -1.5,
+        1.5,
+        -1.5,
+        1.5,
+        4.,
+        light_texture.clone(),
+    ));
+    objects.add(Rectangle::new(2, -1.5, 1.5, -1.5, 1.5, 0.1, light_texture));
+
+    objects
+}
+
+fn cornell_box() -> HittableList {
+    let mut objects = HittableList::default();
+
+    let red = Rc::new(Lambertian {
+        albedo: Rc::new(SolidColor::new(0.65, 0.05, 0.05)),
     });
+    let green = Rc::new(Lambertian {
+        albedo: Rc::new(SolidColor::new(0.12, 0.45, 0.15)),
+    });
+    let white = Rc::new(Lambertian {
+        albedo: Rc::new(SolidColor::new(0.73, 0.73, 0.73)),
+    });
+    let light = Rc::new(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
+
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 0., red));
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone()));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 555., white.clone()));
+    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white));
+
+    objects.add(Rectangle::new(2, 213., 343., 227., 332., 554., light));
 
     objects
 }
@@ -216,26 +260,26 @@ fn main() {
 
     //========================================================
     // Image
-    let aspect_ratio = 16. / 9.;
-    let image_width = 400;
+    let aspect_ratio = 1.;
+    let image_width = 1600;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
-    let samples_per_pixel = 50;
-    let max_depth = 5;
+    let samples_per_pixel = 250;
+    let max_depth = 50;
 
     //========================================================
     // World
-    let world: HittableList = simple_dark();
+    let world: HittableList = cornell_box();
     let background = RGBColor::new(0., 0., 0.);
 
     //========================================================
     // Camera
-    let look_from = Point3::new(26., 3., 6.);
-    let look_at = Point3::new(0., 2., 0.);
+    let look_from = Point3::new(278., 278., -800.);
+    let look_at = Point3::new(278., 278., 0.);
     let vup = Vec3::new(0., 1., 0.);
-    let vfov = 20.;
+    let vfov = 40.;
     let aperture = 0.;
-    let focus_dist = 13.;
+    let focus_dist = 1.;
 
     let cam = Camera::new(
         look_from,

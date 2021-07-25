@@ -51,7 +51,7 @@ impl HitRecord {
             v,
         };
         tmp_rec.set_face_normal(ray, outward_normal);
-        
+
         tmp_rec
     }
 

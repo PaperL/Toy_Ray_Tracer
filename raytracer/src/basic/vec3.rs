@@ -141,9 +141,9 @@ impl Index<usize> for Vec3 {
 
     fn index(&self, index: usize) -> &Self::Output {
         match index {
-            1 => &self.x,
-            2 => &self.y,
-            3 => &self.z,
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
             _ => panic!("Try to get {}th dimension of Vec3.", index),
         }
     }

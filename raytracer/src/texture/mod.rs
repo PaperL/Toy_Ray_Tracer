@@ -1,6 +1,6 @@
-pub mod solid_color;
 pub mod checker_texture;
 pub mod image_texture;
+pub mod solid_color;
 
 use crate::basic::vec3::{Point3, RGBColor};
 

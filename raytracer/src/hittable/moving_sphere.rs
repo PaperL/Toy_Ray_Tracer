@@ -85,7 +85,7 @@ impl Hittable for MovingSphere {
             u: 0.,
             v: 0.,
         };
-        
+
         let outward_normal = (rec.p - cen) / self.r;
         rec.set_face_normal(ray, &outward_normal);
         let uv = Self::get_sphere_uv(outward_normal);

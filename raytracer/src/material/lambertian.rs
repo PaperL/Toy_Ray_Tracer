@@ -3,10 +3,7 @@ use std::rc::Rc;
 use crate::hittable::HitRecord;
 use crate::material::Material;
 use crate::{
-    basic::{
-        ray::Ray,
-        vec3::Vec3,
-    },
+    basic::{ray::Ray, vec3::Vec3},
     texture::Texture,
 };
 
