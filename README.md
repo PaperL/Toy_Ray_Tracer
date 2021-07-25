@@ -19,6 +19,7 @@
   - hittable
     - sphere
     - moving_sphere
+    - rectangle
   - bvh
     - aabb
     - bvh_node
@@ -26,14 +27,16 @@
     - lambertian
     - metal
     - dielectric
+    - diffuse_light
   - texture
     - solid_color
     - checker_texture
+    - image_texture
 
 
 
 ## 当前Commit运行结果预览图
 
-![Output](output/preview.png)
+![Output](output/preview.jpg)
 
 > 高清渲染图见 Release

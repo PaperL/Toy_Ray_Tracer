@@ -44,12 +44,12 @@ fn ray_color(ray: &Ray, world: &HittableList, background: &RGBColor, depth: i32)
             if (scattered.tm - tmp).abs() > INFINITESIMAL {
                 print!("ERRRR!!!!!!!!");
             }
-            return emitted + ray_color(&scattered, world, background, depth - 1) * attenuation;
+            emitted + ray_color(&scattered, world, background, depth - 1) * attenuation
         } else {
-            return emitted;
+            emitted
         }
     } else {
-        return *background;
+        *background
     }
 }
 
@@ -323,7 +323,7 @@ fn main() {
     bar.finish();
     println!("Generating Image...\tDone.");
     print!("Outputing File...\t");
-    img.save("output/output.png").unwrap();
+    img.save("output/output.jpg").unwrap();
     println!("Done.");
     //========================================================
 }
