@@ -27,31 +27,30 @@ use texture::{
     checker_texture::CheckerTexture, image_texture::ImageTexture, solid_color::SolidColor,
 };
 
+use crate::hittable::rectangle::XYRectangle;
+use crate::material::diffuse_light::DiffuseLight;
+
 //---------------------------------------------------------------------------------
 
-fn ray_color(ray: &Ray, world: &HittableList, depth: i32) -> RGBColor {
+fn ray_color(ray: &Ray, world: &HittableList, background: &RGBColor, depth: i32) -> RGBColor {
     if depth <= 0 {
         return RGBColor::default();
     }
     let tmp = ray.tm;
 
     if let Some(rec) = world.hit(ray, INFINITESIMAL, INFINITY) {
-        let mut attenuation = RGBColor::default();
-        if let Some(scattered) = rec.mat_ptr.scatter(ray, &rec, &mut attenuation) {
+        let emitted = rec.mat_ptr.emitted(rec.u, rec.v, rec.p);
+        if let Some((scattered, attenuation)) = rec.mat_ptr.scatter(ray, &rec) {
             if (scattered.tm - tmp).abs() > INFINITESIMAL {
                 print!("ERRRR!!!!!!!!");
             }
-            return ray_color(&scattered, world, depth - 1) * attenuation;
+            return emitted + ray_color(&scattered, world, background, depth - 1) * attenuation;
         } else {
-            return RGBColor::default();
+            return emitted;
         }
-        // let target: Point3 = rec.p + Vec3::rand_in_unit_hemisphere(&rec.normal);
-        // return ray_color(&Ray::new(rec.p, target - rec.p), world, depth - 1) * 0.5;
+    } else {
+        return *background;
     }
-
-    let unit_dir = ray.dir.unit_vector();
-    let t = 0.5 * (unit_dir.y + 1.);
-    RGBColor::new(1., 1., 1.) * (1. - t) + Vec3::new(0.5, 0.7, 1.) * t
 }
 
 //---------------------------------------------------------------------------------
@@ -174,6 +173,43 @@ fn two_spheres() -> HittableList {
     objects
 }
 
+fn simple_dark() -> HittableList {
+    let mut objects = HittableList::default();
+
+    let earth_texture = Rc::new(ImageTexture::new(&"texture/earth.jpg".to_string()));
+
+    let solid_texture = Rc::new(SolidColor::new(1.0, 1.0, 0.9));
+
+    objects.add(Sphere {
+        cen: Point3::new(0., -1000., 0.),
+        r: 1000.,
+        mat_ptr: Rc::new(Lambertian {
+            albedo: solid_texture,
+        }),
+    });
+    objects.add(Sphere {
+        cen: Point3::new(0., 2., 0.),
+        r: 2.,
+        mat_ptr: Rc::new(Lambertian {
+            albedo: earth_texture,
+        }),
+    });
+
+    // let light_texture = Rc::new(DiffuseLight::new_from_color(RGBColor::new(4., 4., 4.)));
+    let light_texture = Rc::new(DiffuseLight::new_from_color(RGBColor::new(4., 4., 4.1)));
+
+    objects.add(XYRectangle {
+        x0: -2.,
+        x1: 2.,
+        y0: 1.,
+        y1: 3.,
+        k: -4.,
+        mat_ptr: light_texture,
+    });
+
+    objects
+}
+
 //---------------------------------------------------------------------------------
 fn main() {
     print!("Initlizing...\t\t");
@@ -181,24 +217,25 @@ fn main() {
     //========================================================
     // Image
     let aspect_ratio = 16. / 9.;
-    let image_width = 1920;
+    let image_width = 400;
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
-    let samples_per_pixel = 100;
-    let max_depth = 50;
+    let samples_per_pixel = 50;
+    let max_depth = 5;
 
     //========================================================
     // World
-    let world: HittableList = two_spheres();
+    let world: HittableList = simple_dark();
+    let background = RGBColor::new(0., 0., 0.);
 
     //========================================================
     // Camera
-    let look_from = Point3::new(13., 2., 3.);
-    let look_at = Point3::new(0., 0., 0.);
+    let look_from = Point3::new(26., 3., 6.);
+    let look_at = Point3::new(0., 2., 0.);
     let vup = Vec3::new(0., 1., 0.);
     let vfov = 20.;
-    let aperture = 0.1;
-    let focus_dist = 10.;
+    let aperture = 0.;
+    let focus_dist = 13.;
 
     let cam = Camera::new(
         look_from,
@@ -230,7 +267,7 @@ fn main() {
                 let u = (x as f64 + rnd.gen::<f64>()) / (image_width - 1) as f64;
                 let v = (y as f64 + rnd.gen::<f64>()) / (image_height - 1) as f64;
                 let ray = cam.get_ray(u, v);
-                pixel_color += ray_color(&ray, &world, max_depth);
+                pixel_color += ray_color(&ray, &world, &background, max_depth);
             }
 
             let pixel = img.get_pixel_mut(x, image_height - y - 1);

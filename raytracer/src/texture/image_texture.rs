@@ -1,7 +1,6 @@
 use image::{GenericImageView, RgbImage};
 
-use crate::basic::clamp_hoi;
-use crate::basic::vec3::RGBColor;
+use crate::basic::{clamp_hoi, vec3::RGBColor};
 
 use super::Texture;
 
@@ -26,7 +25,7 @@ impl ImageTexture {
 }
 
 impl Texture for ImageTexture {
-    fn value(&self, mut u: f64, mut v: f64, p: crate::basic::vec3::Point3) -> RGBColor {
+    fn value(&self, mut u: f64, mut v: f64, _p: crate::basic::vec3::Point3) -> RGBColor {
         u = clamp_hoi(u, 0., 1.);
         v = clamp_hoi(1. - v, 0., 1.);
         let i = (self.image.width() as f64 * u) as u32;

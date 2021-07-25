@@ -1,4 +1,5 @@
 pub mod moving_sphere;
+pub mod rectangle;
 pub mod sphere;
 
 use std::rc::Rc;
@@ -32,6 +33,28 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
+    fn new(
+        u: f64,
+        v: f64,
+        t: f64,
+        ray: &Ray,
+        outward_normal: &Vec3,
+        mat_ptr: Rc<dyn Material>,
+    ) -> Self {
+        let mut tmp_rec = Self {
+            p: ray.at(t),
+            normal: Vec3::default(),
+            mat_ptr,
+            t,
+            front_face: bool::default(),
+            u,
+            v,
+        };
+        tmp_rec.set_face_normal(ray, outward_normal);
+        
+        tmp_rec
+    }
+
     fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {
         self.front_face = Vec3::dot(&ray.dir, &*outward_normal) < 0.;
         self.normal = if self.front_face {

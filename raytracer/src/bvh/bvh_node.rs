@@ -95,7 +95,7 @@ impl Hittable for BvhNode {
         }
     }
 
-    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {
+    fn bounding_box(&self, _time: f64, _dur: f64) -> Option<AABB> {
         Some(self.aabb_box)
     }
 }
