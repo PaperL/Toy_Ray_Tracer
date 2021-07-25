@@ -4,30 +4,29 @@ pub mod hittable;
 pub mod material;
 pub mod texture;
 
-use std::f64::INFINITY;
-use std::rc::Rc;
+use std::{f64::INFINITY, rc::Rc};
 
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use rand::{prelude::ThreadRng, random, Rng};
 
-use basic::INFINITESIMAL;
-use basic::{
-    camera::Camera,
-    ray::Ray,
-    vec3::{Point3, RGBColor, Vec3},
-};
-
-use hittable::{
-    moving_sphere::MovingSphere, rectangle::Rectangle, sphere::Sphere, Hittable, HittableList,
-};
-
-use material::{
-    dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, metal::Metal,
-};
-
-use texture::{
-    checker_texture::CheckerTexture, image_texture::ImageTexture, solid_color::SolidColor,
+use crate::{
+    basic::{
+        camera::Camera,
+        ray::Ray,
+        vec3::{Point3, RGBColor, Vec3},
+        INFINITESIMAL,
+    },
+    hittable::{
+        cube::Cube, moving_sphere::MovingSphere, rectangle::Rectangle, sphere::Sphere, Hittable,
+        HittableList, RotateY, Translate,
+    },
+    material::{
+        dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, metal::Metal,
+    },
+    texture::{
+        checker_texture::CheckerTexture, image_texture::ImageTexture, solid_color::SolidColor,
+    },
 };
 
 //---------------------------------------------------------------------------------
@@ -247,9 +246,29 @@ fn cornell_box() -> HittableList {
     objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green));
     objects.add(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone()));
     objects.add(Rectangle::new(2, 0., 555., 0., 555., 555., white.clone()));
-    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white));
+    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white.clone()));
 
     objects.add(Rectangle::new(2, 213., 343., 227., 332., 554., light));
+
+    let cube1 = Cube::new(
+        Point3::new(0., 0., 0.),
+        Point3::new(165., 330., 165.),
+        white.clone(),
+    );
+    let cube2 = Cube::new(
+        Point3::new(0., 0., 0.),
+        Point3::new(165., 165., 165.),
+        white,
+    );
+
+    objects.add(Translate {
+        hit_ptr: Rc::new(RotateY::new(Rc::new(cube1), 15.)),
+        offset: Vec3::new(265., 0., 295.),
+    });
+    objects.add(Translate {
+        hit_ptr: Rc::new(RotateY::new(Rc::new(cube2), -18.)),
+        offset: Vec3::new(130., 0., 65.),
+    });
 
     objects
 }
@@ -260,12 +279,12 @@ fn main() {
 
     //========================================================
     // Image
-    let aspect_ratio = 1.;
-    let image_width = 1600;
-    let image_height = (image_width as f64 / aspect_ratio) as u32;
+    const aspect_ratio: f64 = 1.;
+    const image_width: u32 = 2000;
+    const image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
     let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
-    let samples_per_pixel = 250;
-    let max_depth = 50;
+    let samples_per_pixel = 500;
+    let max_depth = 100;
 
     //========================================================
     // World
@@ -304,6 +323,7 @@ fn main() {
     // bar.tick();
 
     let mut rnd = rand::thread_rng();
+    // let mut pixels: [[RGBColor; image_width as usize]; image_height as usize];
     for y in 0..image_height {
         for x in 0..image_width {
             let mut pixel_color = RGBColor::default();
@@ -313,7 +333,6 @@ fn main() {
                 let ray = cam.get_ray(u, v);
                 pixel_color += ray_color(&ray, &world, &background, max_depth);
             }
-
             let pixel = img.get_pixel_mut(x, image_height - y - 1);
             *pixel = image::Rgb(pixel_color.calc_color(samples_per_pixel).to_u8_array());
         }

@@ -3,7 +3,10 @@ pub use std::{
     fmt::{Debug, Display},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-use std::{ops::Index, usize};
+use std::{
+    ops::{Index, IndexMut},
+    usize,
+};
 
 use super::{clamp_hoi, INFINITESIMAL};
 
@@ -144,6 +147,17 @@ impl Index<usize> for Vec3 {
             0 => &self.x,
             1 => &self.y,
             2 => &self.z,
+            _ => panic!("Try to get {}th dimension of Vec3.", index),
+        }
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
             _ => panic!("Try to get {}th dimension of Vec3.", index),
         }
     }
