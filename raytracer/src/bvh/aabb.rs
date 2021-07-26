@@ -1,6 +1,6 @@
 use std::mem::swap;
 
-use crate::basic::{min_f64, ray::Ray, vec3::Point3};
+use crate::basic::{max_f64, min_f64, ray::Ray, vec3::Point3};
 
 #[derive(Default, Clone, Copy)]
 pub struct AABB {
@@ -21,7 +21,7 @@ impl AABB {
             if k < 0. {
                 swap(&mut t0, &mut t1);
             }
-            t_min = min_f64(t_min, t0);
+            t_min = max_f64(t_min, t0);
             t_max = min_f64(t_max, t1);
             if t_max <= t_min {
                 return false;
@@ -38,9 +38,9 @@ impl AABB {
                 min_f64(box0.min.z, box1.min.z),
             ),
             Point3::new(
-                min_f64(box0.max.x, box1.max.x),
-                min_f64(box0.max.y, box1.max.y),
-                min_f64(box0.max.z, box1.max.z),
+                max_f64(box0.max.x, box1.max.x),
+                max_f64(box0.max.y, box1.max.y),
+                max_f64(box0.max.z, box1.max.z),
             ),
         )
     }

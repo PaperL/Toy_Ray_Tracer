@@ -11,7 +11,7 @@
 
 ## Module Tree
 
-- main.rs
+- main
   - basic
     - vec3
     - ray
@@ -20,6 +20,8 @@
     - sphere
     - moving_sphere
     - rectangle
+    - cube
+    - constant_medium
   - bvh
     - aabb
     - bvh_node
@@ -28,6 +30,7 @@
     - metal
     - dielectric
     - diffuse_light
+    - isotropic
   - texture
     - solid_color
     - checker_texture
@@ -40,3 +43,11 @@
 ![Output](output/preview.jpg)
 
 > 高清渲染图见 Release
+
+
+
+## 待完成工作
+
+- 所有 Struct 均实现 new 函数
+- 实现 ray_color 函数多线程并行
+- 实现 BvnNode 数据在编译期计算完成

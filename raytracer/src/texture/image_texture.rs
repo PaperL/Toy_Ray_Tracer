@@ -10,7 +10,7 @@ pub struct ImageTexture {
 }
 
 impl ImageTexture {
-    pub fn new(file_name: &str) -> Self {
+    pub fn new_from_file(file_name: &str) -> Self {
         let tmp_image;
         match image::open(file_name) {
             Ok(ret) => tmp_image = ret,

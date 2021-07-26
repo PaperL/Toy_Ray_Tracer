@@ -1,11 +1,16 @@
 pub mod dielectric;
 pub mod diffuse_light;
+pub mod isotropic;
 pub mod lambertian;
 pub mod metal;
 
-use crate::basic::vec3::Point3;
-
-use super::{basic::ray::Ray, basic::vec3::RGBColor, hittable::HitRecord};
+use crate::{
+    basic::{
+        ray::Ray,
+        vec3::{Point3, RGBColor},
+    },
+    hittable::HitRecord,
+};
 
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, RGBColor)>;

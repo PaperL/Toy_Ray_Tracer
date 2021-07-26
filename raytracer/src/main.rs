@@ -17,9 +17,10 @@ use crate::{
         vec3::{Point3, RGBColor, Vec3},
         INFINITESIMAL,
     },
+    bvh::bvh_node::BvhNode,
     hittable::{
-        cube::Cube, moving_sphere::MovingSphere, rectangle::Rectangle, sphere::Sphere, Hittable,
-        HittableList, RotateY, Translate,
+        constant_medium::ConstantMedium, cube::Cube, moving_sphere::MovingSphere,
+        rectangle::Rectangle, sphere::Sphere, Hittable, HittableList, RotateY, Translate,
     },
     material::{
         dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, metal::Metal,
@@ -31,7 +32,7 @@ use crate::{
 
 //---------------------------------------------------------------------------------
 
-fn ray_color(ray: &Ray, world: &HittableList, background: &RGBColor, depth: i32) -> RGBColor {
+fn ray_color(ray: &Ray, world: Rc<dyn Hittable>, background: &RGBColor, depth: i32) -> RGBColor {
     if depth <= 0 {
         return RGBColor::default();
     }
@@ -58,8 +59,8 @@ fn random_scene() -> HittableList {
     let mut world = HittableList::default();
 
     let checker = Rc::new(CheckerTexture {
-        odd: Rc::new(SolidColor::new(0.2, 0.3, 0.1)),
-        even: Rc::new(SolidColor::new(0.9, 0.9, 0.9)),
+        odd: Rc::new(SolidColor::new_from_value(0.2, 0.3, 0.1)),
+        even: Rc::new(SolidColor::new_from_value(0.9, 0.9, 0.9)),
     });
 
     let material_ground = Rc::new(Lambertian { albedo: checker });
@@ -151,7 +152,9 @@ fn random_scene() -> HittableList {
 fn two_spheres() -> HittableList {
     let mut objects = HittableList::default();
 
-    let earth_texture = Rc::new(ImageTexture::new(&"texture/earth.jpg".to_string()));
+    let earth_texture = Rc::new(ImageTexture::new_from_file(
+        &"texture/earth.jpg".to_string(),
+    ));
 
     objects.add(Sphere {
         cen: Point3::new(0., -11., 0.),
@@ -175,9 +178,11 @@ fn two_spheres() -> HittableList {
 fn simple_dark() -> HittableList {
     let mut objects = HittableList::default();
 
-    let earth_texture = Rc::new(ImageTexture::new(&"texture/earth.jpg".to_string()));
+    let earth_texture = Rc::new(ImageTexture::new_from_file(
+        &"texture/earth.jpg".to_string(),
+    ));
 
-    let solid_texture = Rc::new(SolidColor::new(1.0, 1.0, 0.9));
+    let solid_texture = Rc::new(SolidColor::new_from_value(1.0, 1.0, 0.9));
 
     objects.add(Sphere {
         cen: Point3::new(0., -1000., 0.),
@@ -232,13 +237,13 @@ fn cornell_box() -> HittableList {
     let mut objects = HittableList::default();
 
     let red = Rc::new(Lambertian {
-        albedo: Rc::new(SolidColor::new(0.65, 0.05, 0.05)),
+        albedo: Rc::new(SolidColor::new_from_value(0.65, 0.05, 0.05)),
     });
     let green = Rc::new(Lambertian {
-        albedo: Rc::new(SolidColor::new(0.12, 0.45, 0.15)),
+        albedo: Rc::new(SolidColor::new_from_value(0.12, 0.45, 0.15)),
     });
     let white = Rc::new(Lambertian {
-        albedo: Rc::new(SolidColor::new(0.73, 0.73, 0.73)),
+        albedo: Rc::new(SolidColor::new_from_value(0.73, 0.73, 0.73)),
     });
     let light = Rc::new(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
 
@@ -255,20 +260,206 @@ fn cornell_box() -> HittableList {
         Point3::new(165., 330., 165.),
         white.clone(),
     );
+
     let cube2 = Cube::new(
         Point3::new(0., 0., 0.),
         Point3::new(165., 165., 165.),
         white,
     );
 
-    objects.add(Translate {
+    let moved_cube1 = Translate {
         hit_ptr: Rc::new(RotateY::new(Rc::new(cube1), 15.)),
         offset: Vec3::new(265., 0., 295.),
-    });
-    objects.add(Translate {
+    };
+
+    let moved_cube2 = Translate {
         hit_ptr: Rc::new(RotateY::new(Rc::new(cube2), -18.)),
         offset: Vec3::new(130., 0., 65.),
+    };
+
+    objects.add(ConstantMedium::new_from_color(
+        Rc::new(moved_cube1),
+        0.01,
+        RGBColor::new(0., 0., 0.),
+    ));
+    objects.add(ConstantMedium::new_from_color(
+        Rc::new(moved_cube2),
+        0.01,
+        RGBColor::new(1., 1., 1.),
+    ));
+
+    objects
+}
+
+fn cornell_box_bvh() -> HittableList {
+    let mut objects = HittableList::default();
+
+    let red = Rc::new(Lambertian {
+        albedo: Rc::new(SolidColor::new_from_value(0.65, 0.05, 0.05)),
     });
+    let green = Rc::new(Lambertian {
+        albedo: Rc::new(SolidColor::new_from_value(0.12, 0.45, 0.15)),
+    });
+    let white = Rc::new(Lambertian {
+        albedo: Rc::new(SolidColor::new_from_value(0.73, 0.73, 0.73)),
+    });
+    let light = Rc::new(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
+
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 0., red));
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone()));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 555., white.clone()));
+    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white.clone()));
+
+    objects.add(Rectangle::new(2, 213., 343., 227., 332., 554., light));
+
+    let cube1 = Cube::new(
+        Point3::new(0., 0., 0.),
+        Point3::new(165., 330., 165.),
+        white.clone(),
+    );
+
+    let cube2 = Cube::new(
+        Point3::new(0., 0., 0.),
+        Point3::new(165., 165., 165.),
+        white,
+    );
+
+    let moved_cube1 = Translate {
+        hit_ptr: Rc::new(RotateY::new(Rc::new(cube1), 15.)),
+        offset: Vec3::new(265., 0., 295.),
+    };
+
+    let moved_cube2 = Translate {
+        hit_ptr: Rc::new(RotateY::new(Rc::new(cube2), -18.)),
+        offset: Vec3::new(130., 0., 65.),
+    };
+
+    objects.add(ConstantMedium::new_from_color(
+        Rc::new(moved_cube1),
+        0.01,
+        RGBColor::new(0., 0., 0.),
+    ));
+    objects.add(ConstantMedium::new_from_color(
+        Rc::new(moved_cube2),
+        0.01,
+        RGBColor::new(1., 1., 1.),
+    ));
+
+    // objects
+    let mut ret = HittableList::default();
+    ret.add(BvhNode::new_from_list(&objects, 0., 1.));
+
+    ret
+}
+
+fn book2_final() -> HittableList {
+    let mut ground = HittableList::default();
+    let mut objects = HittableList::default();
+
+    // ground cubes
+    let boxes_per_side = 20;
+    let mut rnd: ThreadRng = rand::thread_rng();
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.;
+            let x0 = -1000. + i as f64 * w;
+            let z0 = -1000. + j as f64 * w;
+            let y0 = 0.;
+            let x1 = x0 + w;
+            let y1 = rnd.gen_range(1.0..101.0);
+            let z1 = z0 + w;
+            let ground_material = Rc::new(Lambertian::new_from_color(
+                RGBColor::new(0.48, 0.83, 0.53) * rnd.gen_range(0.9..1.1),
+            ));
+            ground.add(Cube::new(
+                Point3::new(x0, y0, z0),
+                Point3::new(x1, y1, z1),
+                ground_material,
+            ));
+        }
+    }
+    objects.add(BvhNode::new_from_list(&ground, 0., 1.));
+
+    // light
+    let light = Rc::new(DiffuseLight::new_from_color(RGBColor::new(7., 7., 7.)));
+    objects.add(Rectangle::new(2, 123., 423., 147., 412., 554., light));
+
+    // moving yellow ball
+    let cen0 = Point3::new(330., 400., 220.);
+    let cen1 = cen0 + Vec3::new(30., 0., 0.);
+    let moving_sphere_material = Rc::new(Lambertian::new_from_color(RGBColor::new(0.7, 0.3, 0.1)));
+    objects.add(MovingSphere::new(
+        cen0,
+        cen1,
+        0.,
+        1.,
+        50.,
+        moving_sphere_material,
+    ));
+
+    // glass ball
+    objects.add(Sphere::new(
+        Point3::new(240., 170., 20.),
+        60.,
+        Rc::new(Dielectric::new(1.5)),
+    ));
+
+    // iron ball
+    objects.add(Sphere::new(
+        Point3::new(80., 150., 10.),
+        50.,
+        Rc::new(Metal::new(RGBColor::new(0.8, 0.8, 0.9), 1.0)),
+    ));
+
+    // smooth blue ball
+    let boundary1 = Sphere::new(
+        Point3::new(350., 120., 155.),
+        50.,
+        Rc::new(Dielectric::new(1.5)),
+    );
+    objects.add(boundary1.clone());
+    objects.add(ConstantMedium::new(
+        Rc::new(boundary1),
+        0.2,
+        Rc::new(SolidColor::new_from_value(0.2, 0.4, 0.9)),
+    ));
+
+    // air
+    let boundary2 = Sphere::new(
+        Point3::new(0., 0., 0.),
+        5000.,
+        Rc::new(Lambertian::new_from_color(RGBColor::default())),
+    );
+    objects.add(ConstantMedium::new(
+        Rc::new(boundary2),
+        0.0001,
+        Rc::new(SolidColor::new_from_value(1., 1., 1.)),
+    ));
+
+    // globe
+    let earth_texture = Rc::new(ImageTexture::new_from_file(
+        &"texture/earth.jpg".to_string(),
+    ));
+    objects.add(Sphere::new(
+        Point3::new(380., 220., 400.),
+        120.,
+        Rc::new(Lambertian::new(earth_texture)),
+    ));
+
+    // plastic foam
+    let mut plastic_foam_list = HittableList::default();
+    let white = Rc::new(Lambertian::new_from_color(RGBColor::new(0.73, 0.73, 0.73)));
+    for _i in 0..1000 {
+        plastic_foam_list.add(Sphere::new(Vec3::rand_1() * 165., 10., white.clone()));
+    }
+    objects.add(Translate::new(
+        Rc::new(RotateY::new(
+            Rc::new(BvhNode::new_from_list(&plastic_foam_list, 0., 1.)),
+            15.,
+        )),
+        Vec3::new(-100., 270., 395.),
+    ));
 
     objects
 }
@@ -279,22 +470,24 @@ fn main() {
 
     //========================================================
     // Image
-    const aspect_ratio: f64 = 1.;
-    const image_width: u32 = 2000;
-    const image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
-    let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
-    let samples_per_pixel = 500;
-    let max_depth = 100;
+    const ASPECT_RATIO: f64 = 1.;
+    const IMAGE_WIDTH: u32 = 2000;
+    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
+    let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
+    const SAMPLES_PER_PIXEL: u32 = 2000;
+    const MAX_DEPTH: i32 = 70;
 
     //========================================================
     // World
-    let world: HittableList = cornell_box();
+    let world = Rc::new(book2_final());
     let background = RGBColor::new(0., 0., 0.);
 
     //========================================================
     // Camera
-    let look_from = Point3::new(278., 278., -800.);
+    let look_from = Point3::new(478., 278., -600.);
     let look_at = Point3::new(278., 278., 0.);
+    // let look_from = Point3::new(278., 278., -800.);
+    // let look_at = Point3::new(278., 278., 0.);
     let vup = Vec3::new(0., 1., 0.);
     let vfov = 40.;
     let aperture = 0.;
@@ -305,7 +498,7 @@ fn main() {
         look_at,
         vup,
         vfov,
-        aspect_ratio,
+        ASPECT_RATIO,
         aperture,
         focus_dist,
         0.,
@@ -318,23 +511,23 @@ fn main() {
     // Render
 
     println!("Rendering Progress(Number of Line):");
-    let bar = ProgressBar::new(image_height as u64);
+    let bar = ProgressBar::new(IMAGE_HEIGHT as u64);
     // bar.set_style(ProgressStyle::default_spinner());
-    // bar.tick();
+    bar.tick();
 
     let mut rnd = rand::thread_rng();
     // let mut pixels: [[RGBColor; image_width as usize]; image_height as usize];
-    for y in 0..image_height {
-        for x in 0..image_width {
+    for y in 0..IMAGE_HEIGHT {
+        for x in 0..IMAGE_WIDTH {
             let mut pixel_color = RGBColor::default();
-            for _i in 0..samples_per_pixel {
-                let u = (x as f64 + rnd.gen::<f64>()) / (image_width - 1) as f64;
-                let v = (y as f64 + rnd.gen::<f64>()) / (image_height - 1) as f64;
+            for _i in 0..SAMPLES_PER_PIXEL {
+                let u = (x as f64 + rnd.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
+                let v = (y as f64 + rnd.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
                 let ray = cam.get_ray(u, v);
-                pixel_color += ray_color(&ray, &world, &background, max_depth);
+                pixel_color += ray_color(&ray, world.clone(), &background, MAX_DEPTH);
             }
-            let pixel = img.get_pixel_mut(x, image_height - y - 1);
-            *pixel = image::Rgb(pixel_color.calc_color(samples_per_pixel).to_u8_array());
+            let pixel = img.get_pixel_mut(x, IMAGE_HEIGHT - y - 1);
+            *pixel = image::Rgb(pixel_color.calc_color(SAMPLES_PER_PIXEL).to_u8_array());
         }
         bar.inc(1);
     }

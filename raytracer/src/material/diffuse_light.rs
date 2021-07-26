@@ -15,6 +15,10 @@ pub struct DiffuseLight {
 }
 
 impl DiffuseLight {
+    pub fn new(emit: Rc<dyn Texture>) -> Self {
+        Self { emit }
+    }
+
     pub fn new_from_color(color_value: RGBColor) -> Self {
         Self {
             emit: Rc::new(SolidColor { color_value }),

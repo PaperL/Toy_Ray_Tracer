@@ -1,14 +1,12 @@
-use std::{
-    cmp::min,
-    f64::{INFINITY, NEG_INFINITY},
-};
-
-use crate::basic::degree_to_radian;
-
+pub mod constant_medium;
 pub mod cube;
 pub mod moving_sphere;
 pub mod rectangle;
 pub mod sphere;
+
+use std::f64::{INFINITY, NEG_INFINITY};
+
+use crate::basic::degree_to_radian;
 
 use {
     crate::{
@@ -133,6 +131,12 @@ pub struct Translate {
     pub offset: Vec3,
 }
 
+impl Translate {
+    pub fn new(hit_ptr: Rc<dyn Hittable>, offset: Vec3) -> Self {
+        Self { hit_ptr, offset }
+    }
+}
+
 impl Hittable for Translate {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let moved_ray = Ray::new(ray.orig - self.offset, ray.dir, ray.tm);
@@ -240,7 +244,7 @@ impl Hittable for RotateY {
         }
     }
 
-    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {
-        todo!()
+    fn bounding_box(&self, _time: f64, _dur: f64) -> Option<AABB> {
+        self.aabb_box
     }
 }

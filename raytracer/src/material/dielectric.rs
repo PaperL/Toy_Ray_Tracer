@@ -11,6 +11,10 @@ pub struct Dielectric {
 }
 
 impl Dielectric {
+    pub fn new(ir: f64) -> Self {
+        Self { ir }
+    }
+
     pub fn reflectance(cos: f64, ir: f64) -> f64 {
         // Use Schlink's approximation for reflectance.
         let r0 = ((1. - ir) / (1. + ir)).powi(2);

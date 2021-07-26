@@ -7,6 +7,12 @@ pub struct CheckerTexture {
     pub even: Rc<dyn Texture>,
 }
 
+impl CheckerTexture {
+    pub fn new(odd: Rc<dyn Texture>, even: Rc<dyn Texture>) -> Self {
+        Self { odd, even }
+    }
+}
+
 impl Texture for CheckerTexture {
     fn value(&self, u: f64, v: f64, p: crate::basic::vec3::Point3) -> crate::basic::vec3::RGBColor {
         let sines = f64::sin(10. * p.x) * f64::sin(10. * p.y) * f64::sin(10. * p.z);

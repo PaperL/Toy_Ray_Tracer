@@ -1,14 +1,29 @@
 use std::rc::Rc;
 
-use crate::hittable::HitRecord;
-use crate::material::Material;
 use crate::{
-    basic::{ray::Ray, vec3::Vec3},
-    texture::Texture,
+    basic::{
+        ray::Ray,
+        vec3::{RGBColor, Vec3},
+    },
+    hittable::HitRecord,
+    material::Material,
+    texture::{solid_color::SolidColor, Texture},
 };
 
 pub struct Lambertian {
     pub albedo: Rc<dyn Texture>,
+}
+
+impl Lambertian {
+    pub fn new(albedo: Rc<dyn Texture>) -> Self {
+        Self { albedo }
+    }
+
+    pub fn new_from_color(color_value: RGBColor) -> Self {
+        Self {
+            albedo: Rc::new(SolidColor { color_value }),
+        }
+    }
 }
 
 impl Material for Lambertian {

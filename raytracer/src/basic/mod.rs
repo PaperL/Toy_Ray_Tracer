@@ -3,12 +3,27 @@ pub mod ray;
 pub mod vec3;
 
 use std::f64::consts::PI;
+
+use rand::{prelude::ThreadRng, Rng};
+
 pub const INFINITESIMAL: f64 = 0.0000001;
 
-// pub fn rand_1()->f64{
-//     static mut RND: ThreadRng = rand::thread_rng();
-//     RND.gen()
-// }
+pub fn rand_1() -> f64 {
+    let mut rnd: ThreadRng = rand::thread_rng();
+    rnd.gen()
+}
+
+pub fn f64_equal(x: f64, y: f64) -> bool {
+    (x - y).abs() < INFINITESIMAL
+}
+
+pub fn max_f64(x: f64, y: f64) -> f64 {
+    if x > y {
+        x
+    } else {
+        y
+    }
+}
 
 pub fn min_f64(x: f64, y: f64) -> f64 {
     if x < y {

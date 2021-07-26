@@ -67,7 +67,7 @@ jobs:
           # github.ref is tag when trigger is tag
           # or can use ${{ steps.get_version.outputs.VERSION }}
           body: |
-            Ray Tracing in One Weekend: Book2
+            Ray Tracing in One Weekend: Book2 Final Scene
           draft: false
           prerelease: false
       - name: Upload Release Asset 🚀

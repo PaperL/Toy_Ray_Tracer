@@ -12,9 +12,9 @@ pub struct Metal {
 }
 
 impl Metal {
-    pub fn new(a: &RGBColor, f: f64) -> Self {
+    pub fn new(albedo: RGBColor, f: f64) -> Self {
         Self {
-            albedo: *a,
+            albedo,
             fuzz: clamp_oi(f, 0., 1.),
         }
     }

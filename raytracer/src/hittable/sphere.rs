@@ -18,9 +18,9 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    // pub fn new(cen: Point3, r: f64, mat_ptr: Rc<dyn Material>) -> Self {
-    //     Self { cen, r, mat_ptr }
-    // }
+    pub fn new(cen: Point3, r: f64, mat_ptr: Rc<dyn Material>) -> Self {
+        Self { cen, r, mat_ptr }
+    }
 
     pub fn get_sphere_uv(p: Point3) -> (f64, f64) {
         let theta = f64::acos(-p.y);
@@ -68,7 +68,7 @@ impl Hittable for Sphere {
         Some(rec)
     }
 
-    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {
+    fn bounding_box(&self, _time: f64, _dur: f64) -> Option<AABB> {
         Some(AABB::new(
             self.cen - Vec3::new(self.r, self.r, self.r),
             self.cen + Vec3::new(self.r, self.r, self.r),

@@ -3,9 +3,9 @@ use std::{cmp::Ordering, rc::Rc};
 use rand::{prelude::ThreadRng, Rng};
 
 use super::aabb::AABB;
-use crate::hittable::Hittable;
+use crate::hittable::{Hittable, HittableList};
 
-struct BvhNode {
+pub struct BvhNode {
     left: Rc<dyn Hittable>,
     right: Rc<dyn Hittable>,
     aabb_box: AABB,
@@ -26,15 +26,11 @@ impl BvhNode {
         }
     }
 
-    fn new_from_vec(
-        src_objects: &Vec<Rc<dyn Hittable>>,
-        start: usize,
-        end: usize,
-        time: f64,
-        dur: f64,
-    ) -> Self {
-        let mut objects = src_objects.clone()[start..end].to_vec();
+    pub fn new_from_list(hittable_list: &HittableList, time: f64, dur: f64) -> Self {
+        Self::new_from_vec(hittable_list.objects.clone(), time, dur)
+    }
 
+    pub fn new_from_vec(mut objects: Vec<Rc<dyn Hittable>>, time: f64, dur: f64) -> Self {
         let mut rnd: ThreadRng = rand::thread_rng();
         let axis = rnd.gen_range(0..3);
         // let comparator = |x, y| BvhNode::box_compare(x, y, axis);
@@ -46,22 +42,23 @@ impl BvhNode {
             .unwrap()
         };
 
-        let object_span = end - start;
-        if object_span == 1 {
-            Self::new(objects[start].clone(), objects[start].clone(), time, dur)
+        let object_span = objects.len();
+        if object_span == 0 {
+            panic!("Get empty Vec at BvhNode::new_from_vec!");
+        } else if object_span == 1 {
+            Self::new(objects[0].clone(), objects[0].clone(), time, dur)
         } else if object_span == 2 {
-            match comparator(&objects[start], &objects[end - 1]) {
-                Ordering::Less => {
-                    Self::new(objects[start].clone(), objects[end - 1].clone(), time, dur)
-                }
-                _ => Self::new(objects[end - 1].clone(), objects[start].clone(), time, dur),
+            match comparator(&objects[0], &objects[1]) {
+                Ordering::Less => Self::new(objects[0].clone(), objects[1].clone(), time, dur),
+                _ => Self::new(objects[1].clone(), objects[0].clone(), time, dur),
             }
         } else {
             objects.sort_unstable_by(comparator);
-            let mid = (start + end) / 2;
+            let mut left_vec = objects;
+            let right_vec = left_vec.split_off(object_span / 2);
             Self::new(
-                Rc::new(Self::new_from_vec(src_objects, start, mid, time, dur)),
-                Rc::new(Self::new_from_vec(src_objects, mid, end, time, dur)),
+                Rc::new(Self::new_from_vec(left_vec, time, dur)),
+                Rc::new(Self::new_from_vec(right_vec, time, dur)),
                 time,
                 dur,
             )
