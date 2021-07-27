@@ -1,4 +1,4 @@
-use crate::basic::vec3::RGBColor;
+use crate::basic::vec3::{Point3, RGBColor};
 
 use super::Texture;
 
@@ -11,15 +11,15 @@ impl SolidColor {
         Self { color_value }
     }
 
-    pub fn new_from_value(x: f64, y: f64, z: f64) -> Self {
+    pub fn new_from_value(r: f64, g: f64, b: f64) -> Self {
         Self {
-            color_value: RGBColor::new(x, y, z),
+            color_value: RGBColor::new(r, g, b),
         }
     }
 }
 
 impl Texture for SolidColor {
-    fn value(&self, _u: f64, _v: f64, _p: crate::basic::vec3::Point3) -> RGBColor {
+    fn value(&self, _u: f64, _v: f64, _p: Point3) -> RGBColor {
         self.color_value
     }
 }

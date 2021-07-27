@@ -1,39 +1,37 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::{
     basic::{
         ray::Ray,
         vec3::{RGBColor, Vec3},
     },
+    hittable::HitRecord,
     texture::{solid_color::SolidColor, Texture},
 };
 
 use super::Material;
 
 pub struct Isotropic {
-    albedo: Rc<dyn Texture>,
+    // isotropic: 各方向同性
+    albedo: Arc<dyn Texture>,
 }
 
 impl Isotropic {
-    pub fn new(albedo: Rc<dyn Texture>) -> Self {
+    pub fn new(albedo: Arc<dyn Texture>) -> Self {
         Self { albedo }
     }
 
-    pub fn new_from_color(c: RGBColor) -> Self {
+    pub fn new_from_color(color_value: RGBColor) -> Self {
         Self {
-            albedo: Rc::new(SolidColor::new(c)),
+            albedo: Arc::new(SolidColor::new(color_value)),
         }
     }
 }
 
 impl Material for Isotropic {
-    fn scatter(
-        &self,
-        r_in: &crate::basic::ray::Ray,
-        rec: &crate::hittable::HitRecord,
-    ) -> Option<(crate::basic::ray::Ray, RGBColor)> {
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(crate::basic::ray::Ray, RGBColor)> {
         Some((
-            Ray::new(rec.p, Vec3::rand_in_unit_sphere(), r_in.tm),
+            Ray::new(rec.p, Vec3::rand_unit_sphere(), ray.tm),
             self.albedo.value(rec.u, rec.v, rec.p),
         ))
     }

@@ -18,7 +18,8 @@ impl AABB {
             let k = 1. / ray.dir[i];
             let mut t0 = (self.min[i] - ray.orig[i]) * k;
             let mut t1 = (self.max[i] - ray.orig[i]) * k;
-            if k < 0. {
+            // if k < 0. {
+            if t0 > t1 {
                 swap(&mut t0, &mut t1);
             }
             t_min = max_f64(t_min, t0);

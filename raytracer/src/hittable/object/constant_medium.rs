@@ -1,11 +1,13 @@
 use std::{
     f64::{INFINITY, NEG_INFINITY},
-    rc::Rc,
+    sync::Arc,
 };
+
+use super::super::{HitRecord, Hittable};
 
 use crate::{
     basic::{
-        f64_equal, rand_1,
+        f64_equal, rand_1, tp,
         vec3::{RGBColor, Vec3},
         INFINITESIMAL,
     },
@@ -14,28 +16,27 @@ use crate::{
     texture::Texture,
 };
 
-use super::{HitRecord, Hittable};
-
+#[derive(Clone)]
 pub struct ConstantMedium {
-    pub boundary: Rc<dyn Hittable>,
-    pub phase_function: Rc<dyn Material>,
+    pub boundary: Arc<dyn Hittable>,
+    pub phase_function: Arc<dyn Material>,
     neg_inv_density: f64,
 }
 
 impl ConstantMedium {
-    pub fn new(boundary: Rc<dyn Hittable>, d: f64, a: Rc<dyn Texture>) -> Self {
+    pub fn new(boundary: Arc<dyn Hittable>, d: f64, a: Arc<dyn Texture>) -> Self {
         Self {
             boundary,
             neg_inv_density: -1. / d,
-            phase_function: Rc::new(Isotropic::new(a)),
+            phase_function: tp(Isotropic::new(a)),
         }
     }
 
-    pub fn new_from_color(boundary: Rc<dyn Hittable>, d: f64, c: RGBColor) -> Self {
+    pub fn new_from_color(boundary: Arc<dyn Hittable>, d: f64, c: RGBColor) -> Self {
         Self {
             boundary,
             neg_inv_density: -1. / d,
-            phase_function: Rc::new(Isotropic::new_from_color(c)),
+            phase_function: tp(Isotropic::new_from_color(c)),
         }
     }
 }
@@ -72,7 +73,7 @@ impl Hittable for ConstantMedium {
                         front_face: true,
                         u: 0.,
                         v: 0.,
-                        mat_ptr: self.phase_function.clone(),
+                        mat: self.phase_function.clone(),
                     });
                 }
             }
@@ -80,7 +81,7 @@ impl Hittable for ConstantMedium {
         None
     }
 
-    fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {
-        self.boundary.bounding_box(time, dur)
+    fn bounding_box(&self, tm: f64, dur: f64) -> Option<AABB> {
+        self.boundary.bounding_box(tm, dur)
     }
 }

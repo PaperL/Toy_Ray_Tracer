@@ -13,7 +13,7 @@ use crate::{
 };
 
 pub trait Material {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, RGBColor)>;
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Ray, RGBColor)>;
 
     fn emitted(&self, _u: f64, _v: f64, _p: Point3) -> RGBColor {
         RGBColor::new(0., 0., 0.)

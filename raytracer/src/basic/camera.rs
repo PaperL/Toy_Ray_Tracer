@@ -7,26 +7,26 @@ use super::vec3::{Point3, Vec3};
 
 pub struct Camera {
     orig: Point3,
-    lower_left_corner: Point3,
-    horizontal: Vec3,
-    vertical: Vec3,
-    u: Vec3,
-    v: Vec3,
-    lens_radius: f64,
-    time: f64, // shutter open/close times
-    dur: f64,
+    corner: Point3, // lower left corner    画面左下角坐标
+    hor: Vec3,      // horizontal           画面左下角到画面左上角向量
+    ver: Vec3,      // vertical             画面左下角到画面右下角向量
+    u: Vec3,        // u, v, w              用于计算透镜成像相关
+    v: Vec3,        //
+    lens_r: f64,    // lens radius          棱镜半径
+    tm: f64,        // shutter open moment  快门开启时刻
+    dur: f64,       // shutter open time    快门开启时间
 }
 
 impl Camera {
     pub fn new(
-        look_from: Point3,
-        look_at: Point3,
-        vup: Vec3,
-        vfov: f64, // vertical filed-of-view in degrees
-        aspect_ratio: f64,
-        aperture: f64,
-        focus_dist: f64,
-        time: f64,
+        fr: Point3,        // look from
+        to: Point3,        // look to
+        vup: Vec3,         // view up vector, 用于确定画面上下方向与画面法相所在平面垂直于地面
+        vfov: f64,         // vertical filed-of-view in degrees, 视域大小
+        aspect_ratio: f64, // 图像长宽比
+        aperture: f64,     // 光圈大小
+        focus_dist: f64,   // 透镜到完美对焦平面的距离
+        tm: f64,
         dur: f64,
     ) -> Self {
         let theta = degree_to_radian(vfov);
@@ -34,39 +34,37 @@ impl Camera {
         let viewport_height = 2. * h;
         let viewport_width = aspect_ratio * viewport_height;
 
-        let w = (look_from - look_at).unit_vector();
+        let w = (fr - to).to_unit();
         let u = Vec3::cross(&vup, &w);
         let v = Vec3::cross(&w, &u);
 
-        let orig = look_from;
-        let horizontal = u * viewport_width * focus_dist;
-        let vertical = v * viewport_height * focus_dist;
-        let lower_left_corner = orig - horizontal / 2. - vertical / 2. - w * focus_dist;
+        let orig = fr;
+        let hor = u * viewport_width * focus_dist;
+        let ver = v * viewport_height * focus_dist;
+        let corner = orig - hor / 2. - ver / 2. - w * focus_dist;
 
         Self {
             orig,
-            lower_left_corner,
-            horizontal,
-            vertical,
+            corner,
+            hor,
+            ver,
             u,
             v,
-            lens_radius: aperture / 2.,
-            time,
+            lens_r: aperture / 2.,
+            tm,
             dur,
         }
     }
 
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
-        let rd = Vec3::rand_in_unit_disk() * self.lens_radius;
+        let rd = Vec3::rand_unit_disk() * self.lens_r;
         let offset = self.u * rd.x + self.v * rd.y;
 
         let mut rnd: ThreadRng = rand::thread_rng();
-        Ray {
-            orig: self.orig + offset,
-            dir: self.lower_left_corner + self.horizontal * s + self.vertical * t
-                - self.orig
-                - offset,
-            tm: rnd.gen_range(self.time..(self.time + self.dur)),
-        }
+        Ray::new(
+            self.orig + offset,
+            self.corner + self.hor * s + self.ver * t - self.orig - offset,
+            rnd.gen_range(self.tm..(self.tm + self.dur)),
+        )
     }
 }

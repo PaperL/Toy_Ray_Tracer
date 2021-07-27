@@ -11,7 +11,7 @@
 
 ## Module Tree
 
-- main
+- create
   - basic
     - vec3
     - ray
@@ -48,6 +48,6 @@
 
 ## 待完成工作
 
-- 所有 Struct 均实现 new 函数
 - 实现 ray_color 函数多线程并行
+- 完成 Book3 内容
 - 实现 BvnNode 数据在编译期计算完成

@@ -1,11 +1,9 @@
 pub use rand::{prelude::ThreadRng, random, Rng};
 pub use std::{
     fmt::{Debug, Display},
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
-};
-use std::{
-    ops::{Index, IndexMut},
-    usize,
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
+    // fmt::Dub 用于 "{:?}" 输出, fmt::Display 用于 "{}" 输出
+    // ops::* 为 Vec3 所重载的运算/操作符
 };
 
 use super::{clamp_hoi, INFINITESIMAL};
@@ -13,7 +11,7 @@ use super::{clamp_hoi, INFINITESIMAL};
 pub type RGBColor = Vec3;
 pub type Point3 = Vec3;
 
-#[derive(Copy, Clone, PartialEq, Default)]
+#[derive(Default, Clone, Copy, PartialEq)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -41,7 +39,7 @@ impl Vec3 {
         self.x.abs() < INFINITESIMAL && self.y.abs() < INFINITESIMAL && self.z.abs() < INFINITESIMAL
     }
 
-    pub fn unit_vector(self) -> Self {
+    pub fn to_unit(self) -> Self {
         self / self.length()
     }
 
@@ -55,8 +53,8 @@ impl Vec3 {
 
     pub fn rand_1() -> Self {
         let mut rnd: ThreadRng = rand::thread_rng();
+        // todo 令 rnd 为 static 可减少 rand::thread_rng() 开销
         Self {
-            // todo 减少 rand::thread_rng() 开销
             x: rnd.gen::<f64>(),
             y: rnd.gen::<f64>(),
             z: rnd.gen::<f64>(),
@@ -73,15 +71,15 @@ impl Vec3 {
     }
 
     pub fn rand_unit() -> Self {
-        Vec3::rand(-1., 1.).unit_vector()
+        Vec3::rand(-1., 1.).to_unit()
     }
 
-    pub fn rand_in_unit_sphere() -> Self {
-        Vec3::rand(-1., 1.).unit_vector() * random::<f64>()
+    pub fn rand_unit_sphere() -> Self {
+        Vec3::rand(-1., 1.).to_unit() * random::<f64>()
     }
 
-    pub fn rand_in_unit_hemisphere(normal: &Vec3) -> Self {
-        let p = Vec3::rand(-1., 1.).unit_vector() * random::<f64>();
+    pub fn rand_unit_hemisphere(normal: &Vec3) -> Self {
+        let p = Vec3::rand(-1., 1.).to_unit() * random::<f64>();
         if Vec3::dot(&p, &*normal) > 0. {
             p
         } else {
@@ -89,14 +87,14 @@ impl Vec3 {
         }
     }
 
-    pub fn rand_in_unit_disk() -> Vec3 {
+    pub fn rand_unit_disk() -> Vec3 {
         let mut rnd: ThreadRng = rand::thread_rng();
         Vec3 {
             x: rnd.gen_range(-1.0..1.0),
             y: rnd.gen_range(-1.0..1.0),
             z: 0.,
         }
-        .unit_vector()
+        .to_unit()
             * random::<f64>()
     }
 

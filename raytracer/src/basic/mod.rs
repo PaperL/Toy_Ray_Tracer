@@ -2,11 +2,11 @@ pub mod camera;
 pub mod ray;
 pub mod vec3;
 
-use std::f64::consts::PI;
+use std::{f64::consts::PI, sync::Arc};
 
 use rand::{prelude::ThreadRng, Rng};
 
-pub const INFINITESIMAL: f64 = 0.0000001;
+pub const INFINITESIMAL: f64 = 0.0001;
 
 pub fn rand_1() -> f64 {
     let mut rnd: ThreadRng = rand::thread_rng();
@@ -59,9 +59,7 @@ pub fn clamp_hoi(x: f64, min: f64, max: f64) -> f64 {
     x
 }
 
-//====================================================
-
-// #[cfg(test)]
-// mod tests {
-//     fn test() {}
-// }
+pub fn tp<T>(arg: T) -> Arc<T> {
+    // turn argument into Arc pointer
+    Arc::new(arg)
+}

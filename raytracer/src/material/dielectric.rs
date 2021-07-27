@@ -7,7 +7,7 @@ use crate::material::Material;
 use rand::random;
 
 pub struct Dielectric {
-    pub ir: f64, // Index of Refraction
+    pub ir: f64, // Index of Refraction, 折射率
 }
 
 impl Dielectric {
@@ -23,14 +23,14 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
         let refraction_ratio = if rec.front_face {
             1. / self.ir
         } else {
             self.ir
         };
 
-        let unit_dir = r_in.dir.unit_vector();
+        let unit_dir = ray.dir.to_unit();
         let cos_theta = f64::min(Vec3::dot(&-unit_dir, &rec.normal), 1.);
         let sin_theta = (1. - cos_theta.powi(2)).sqrt();
 
@@ -43,6 +43,6 @@ impl Material for Dielectric {
             dir = Vec3::refract(&unit_dir, &rec.normal, refraction_ratio);
         }
 
-        Some((Ray::new(rec.p, dir, r_in.tm), RGBColor::new(1., 1., 1.)))
+        Some((Ray::new(rec.p, dir, ray.tm), RGBColor::new(1., 1., 1.)))
     }
 }
