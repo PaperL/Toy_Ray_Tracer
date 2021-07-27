@@ -14,7 +14,7 @@ use crate::{
 
 //=================================================
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 
     fn bounding_box(&self, tm: f64, dur: f64) -> Option<AABB>;
@@ -75,11 +75,8 @@ pub struct HittableList {
 }
 
 impl HittableList {
-    pub fn add<T>(&mut self, object: T)
-    where
-        T: Hittable + 'static,
-    {
-        self.objects.push(Arc::new(object));
+    pub fn add(&mut self, object: Arc<dyn Hittable>) {
+        self.objects.push(object);
     }
 }
 

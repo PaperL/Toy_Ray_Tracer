@@ -6,7 +6,7 @@ use super::{
 };
 
 use crate::{
-    basic::{ray::Ray, vec3::Point3},
+    basic::{ray::Ray, tp, vec3::Point3},
     bvh::aabb::AABB,
     material::Material,
 };
@@ -27,7 +27,7 @@ impl Cube {
         };
 
         //todo 可用循环减少代码量
-        tmp_cube.sides.add(Rectangle::new(
+        tmp_cube.sides.add(tp(Rectangle::new(
             0,
             cube_min.x,
             cube_max.x,
@@ -35,8 +35,8 @@ impl Cube {
             cube_max.y,
             cube_min.z,
             mat.clone(),
-        ));
-        tmp_cube.sides.add(Rectangle::new(
+        )));
+        tmp_cube.sides.add(tp(Rectangle::new(
             0,
             cube_min.x,
             cube_max.x,
@@ -44,8 +44,8 @@ impl Cube {
             cube_max.y,
             cube_max.z,
             mat.clone(),
-        ));
-        tmp_cube.sides.add(Rectangle::new(
+        )));
+        tmp_cube.sides.add(tp(Rectangle::new(
             1,
             cube_min.y,
             cube_max.y,
@@ -53,8 +53,8 @@ impl Cube {
             cube_max.z,
             cube_min.x,
             mat.clone(),
-        ));
-        tmp_cube.sides.add(Rectangle::new(
+        )));
+        tmp_cube.sides.add(tp(Rectangle::new(
             1,
             cube_min.y,
             cube_max.y,
@@ -62,8 +62,8 @@ impl Cube {
             cube_max.z,
             cube_max.x,
             mat.clone(),
-        ));
-        tmp_cube.sides.add(Rectangle::new(
+        )));
+        tmp_cube.sides.add(tp(Rectangle::new(
             2,
             cube_min.x,
             cube_max.x,
@@ -71,10 +71,10 @@ impl Cube {
             cube_max.z,
             cube_min.y,
             mat.clone(),
-        ));
-        tmp_cube.sides.add(Rectangle::new(
+        )));
+        tmp_cube.sides.add(tp(Rectangle::new(
             2, cube_min.x, cube_max.x, cube_min.z, cube_max.z, cube_max.y, mat,
-        ));
+        )));
 
         tmp_cube
     }

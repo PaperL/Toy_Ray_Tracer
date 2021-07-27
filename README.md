@@ -38,16 +38,15 @@
 
 
 
-## 当前Commit运行结果预览图
+## 当前Commit运行结果
 
 ![Output](output/preview.jpg)
 
-> 高清渲染图见 Release
+> 8线程并行计算，渲染总耗时19分钟
 
 
 
 ## 待完成工作
 
-- 实现 ray_color 函数多线程并行
 - 完成 Book3 内容
 - 实现 BvnNode 数据在编译期计算完成

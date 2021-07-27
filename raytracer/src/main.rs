@@ -2,13 +2,20 @@ pub mod basic;
 pub mod bvh;
 pub mod hittable;
 pub mod material;
+mod scene;
 pub mod texture;
 
-use std::{f64::INFINITY, sync::Arc};
+use std::{
+    f64::INFINITY,
+    sync::{mpsc, Arc},
+    thread,
+    time::Instant,
+};
 
+use console::{style, Emoji};
 use image::{ImageBuffer, RgbImage};
-use indicatif::ProgressBar;
-use rand::{prelude::ThreadRng, random, Rng};
+use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
+use rand::Rng;
 
 use crate::{
     basic::{
@@ -18,21 +25,7 @@ use crate::{
         vec3::{Point3, RGBColor, Vec3},
         INFINITESIMAL,
     },
-    bvh::bvh_node::BvhNode,
-    hittable::{
-        instance::{rotate_y::RotateY, translate::Translate},
-        object::{
-            constant_medium::ConstantMedium, cube::Cube, moving_sphere::MovingSphere,
-            rectangle::Rectangle, sphere::Sphere,
-        },
-        Hittable, HittableList,
-    },
-    material::{
-        dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, metal::Metal,
-    },
-    texture::{
-        checker_texture::CheckerTexture, image_texture::ImageTexture, solid_color::SolidColor,
-    },
+    hittable::{Hittable, HittableList},
 };
 
 //---------------------------------------------------------------------------------
@@ -55,381 +48,85 @@ fn ray_color(ray: &Ray, item: Arc<dyn Hittable>, background: &RGBColor, depth: i
 
 //---------------------------------------------------------------------------------
 
-fn random_scene() -> HittableList {
-    let mut world = HittableList::default();
+static INIT: Emoji<'_, '_> = Emoji("💿  ", "");
+static RUN: Emoji<'_, '_> = Emoji("🚀  ", "");
+static COLLECT: Emoji<'_, '_> = Emoji("🚛  ", "");
+static GENERATE: Emoji<'_, '_> = Emoji("🏭  ", "");
+static OUTPUT: Emoji<'_, '_> = Emoji("🥽 ", "");
+static FINISH: Emoji<'_, '_> = Emoji("🎉 ", "");
+static TIME: Emoji<'_, '_> = Emoji("⏱ ", "");
 
-    let checker = tp(Lambertian {
-        albedo: tp(CheckerTexture {
-            odd: tp(SolidColor::new_from_value(0.2, 0.3, 0.1)),
-            even: tp(SolidColor::new_from_value(0.9, 0.9, 0.9)),
-        }),
-    });
-    let metal = tp(Metal {
-        albedo: RGBColor::new(1., 1., 1.),
-        fuzz: 0.,
-    });
-    let glass = tp(Dielectric { ir: 1.5 });
-
-    world.add(Sphere {
-        cen: Point3::new(0., -1000., 0.),
-        r: 1000.,
-        mat: metal,
-    });
-
-    world.add(Sphere {
-        cen: Point3::new(-2., 1., 0.),
-        r: 1.,
-        mat: glass,
-    });
-
-    world.add(Translate::new(
-        tp(RotateY::new(
-            tp(Sphere {
-                cen: Point3::new(0., 0., 0.),
-                r: 1.,
-                mat: checker,
-            }),
-            180.,
-        )),
-        Vec3::new(4., 1., 0.),
-    ));
-
-    let mut rnd: ThreadRng = rand::thread_rng();
-    for i in -7..7 {
-        for j in -7..7 {
-            let cen = Point3::new(
-                i as f64 + 1.1 * rnd.gen::<f64>(),
-                rnd.gen_range(0.17..0.23),
-                j as f64 + 1.1 * rnd.gen::<f64>(),
-            );
-
-            if (cen - Point3::new(4., cen.y, 0.)).length() > 1.2 {
-                let mat_dice = random::<f64>();
-                if mat_dice < 0.8 {
-                    let sphere_material = tp(Lambertian {
-                        albedo: tp(SolidColor {
-                            color_value: RGBColor::rand_1(),
-                        }),
-                    });
-                    world.add(MovingSphere {
-                        r: cen.y,
-                        mat: sphere_material,
-                        cen,
-                        mov: Vec3::new(0., rnd.gen_range(0.0..0.5), 0.),
-                        tm: 0.,
-                        dur: 1.,
-                    });
-                } else if mat_dice < 0.95 {
-                    let sphere_material = tp(Metal {
-                        albedo: RGBColor::rand(0.5, 1.),
-                        fuzz: rnd.gen_range(0.0..0.5),
-                    });
-                    world.add(Sphere {
-                        cen,
-                        r: cen.y,
-                        mat: sphere_material,
-                    });
-                } else {
-                    let sphere_material = tp(Dielectric { ir: 1.5 });
-                    world.add(Sphere {
-                        cen,
-                        r: cen.y,
-                        mat: sphere_material,
-                    });
-                }
-            }
-        }
-    }
-
-    world
-}
-
-fn simple_dark_scene() -> HittableList {
-    let mut objects = HittableList::default();
-
-    let earth_texture = tp(ImageTexture::new_from_file(
-        &"texture/earth.jpg".to_string(),
-    ));
-
-    let solid_texture = tp(SolidColor::new_from_value(1.0, 1.0, 0.9));
-
-    objects.add(Sphere {
-        cen: Point3::new(0., -1000., 0.),
-        r: 1000.,
-        mat: tp(Lambertian {
-            albedo: solid_texture,
-        }),
-    });
-    objects.add(Sphere {
-        cen: Point3::new(0., 2., 0.),
-        r: 1.7,
-        mat: tp(Lambertian {
-            albedo: earth_texture,
-        }),
-    });
-
-    let light_texture = tp(DiffuseLight::new_from_color(RGBColor::new(4., 4., 4.3)));
-
-    objects.add(Rectangle::new(
-        0,
-        -1.5,
-        1.5,
-        1.,
-        3.,
-        -4.,
-        light_texture.clone(),
-    ));
-    objects.add(Rectangle::new(
-        1,
-        1.,
-        3.,
-        -1.5,
-        1.5,
-        -4.,
-        light_texture.clone(),
-    ));
-    objects.add(Rectangle::new(
-        2,
-        -1.5,
-        1.5,
-        -1.5,
-        1.5,
-        4.,
-        light_texture.clone(),
-    ));
-    objects.add(Rectangle::new(2, -1.5, 1.5, -1.5, 1.5, 0.1, light_texture));
-
-    objects
-}
-
-fn cornell_box_bvh() -> HittableList {
-    let mut objects = HittableList::default();
-
-    // let checker = tp(Lambertian {
-    //     albedo: tp(CheckerTexture {
-    //         odd: tp(SolidColor::new_from_value(0.2, 0.3, 0.1)),
-    //         even: tp(SolidColor::new_from_value(0.9, 0.9, 0.9)),
-    //     }),
-    // });
-
-    let red = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.65, 0.05, 0.05)),
-    });
-    let green = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.12, 0.45, 0.15)),
-    });
-    let white = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
-    });
-    let light = tp(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
-
-    objects.add(Rectangle::new(1, 0., 555., 0., 555., 0., red.clone()));
-    objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green));
-    objects.add(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone()));
-    objects.add(Rectangle::new(2, 0., 555., 0., 555., 555., white.clone()));
-    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white));
-
-    objects.add(Rectangle::new(2, 213., 343., 227., 332., 554., light));
-
-    let cube1 = Cube::new(
-        Point3::new(0., 0., 0.),
-        Point3::new(165., 330., 165.),
-        red.clone(),
-    );
-
-    let cube2 = Cube::new(Point3::new(0., 0., 0.), Point3::new(165., 165., 165.), red);
-
-    let moved_cube1 = Translate {
-        item: tp(RotateY::new(tp(cube1), 15.)),
-        offset: Vec3::new(265., 0., 295.),
-    };
-
-    let moved_cube2 = Translate {
-        item: tp(RotateY::new(tp(cube2), -18.)),
-        offset: Vec3::new(130., 0., 65.),
-    };
-
-    // objects.add(ConstantMedium::new_from_color(
-    //     tp(moved_cube1),
-    //     0.01,
-    //     RGBColor::new(0., 0., 0.),
-    // ));
-    // objects.add(ConstantMedium::new_from_color(
-    //     tp(moved_cube2),
-    //     0.01,
-    //     RGBColor::new(1., 1., 1.),
-    // ));
-
-    objects.add(moved_cube1);
-    objects.add(moved_cube2);
-
-    let mut ret = HittableList::default();
-    ret.add(BvhNode::new_from_list(&objects, 0., 1.));
-
-    ret
-}
-
-fn book2_final_scene() -> HittableList {
-    let mut ground = HittableList::default();
-    let mut objects = HittableList::default();
-
-    // ground cubes
-    let boxes_per_side = 20;
-    let mut rnd: ThreadRng = rand::thread_rng();
-    for i in 0..boxes_per_side {
-        for j in 0..boxes_per_side {
-            let w = 100.;
-            let x0 = -1000. + i as f64 * w;
-            let z0 = -1000. + j as f64 * w;
-            let y0 = 0.;
-            let x1 = x0 + w;
-            let y1 = rnd.gen_range(1.0..100.0);
-            let z1 = z0 + w;
-            let ground_material = tp(Lambertian::new_from_color(
-                RGBColor::new(0.48, 0.83, 0.53) * rnd.gen_range(0.8..1.1),
-            ));
-            ground.add(Cube::new(
-                Point3::new(x0, y0, z0),
-                Point3::new(x1, y1, z1),
-                ground_material,
-            ));
-        }
-    }
-    objects.add(BvhNode::new_from_list(&ground, 0., 1.));
-
-    // light
-    let light = tp(DiffuseLight::new_from_color(RGBColor::new(7., 7., 7.)));
-    objects.add(Rectangle::new(2, 123., 423., 147., 412., 554., light));
-
-    // moving yellow ball
-    let cen0 = Point3::new(330., 400., 220.);
-    let cen1 = cen0 + Vec3::new(30., 0., 0.);
-    let moving_sphere_material = tp(Lambertian::new_from_color(RGBColor::new(0.7, 0.3, 0.1)));
-    objects.add(MovingSphere::new(
-        cen0,
-        cen1,
-        0.,
-        1.,
-        50.,
-        moving_sphere_material,
-    ));
-
-    // glass ball
-    objects.add(Sphere::new(
-        Point3::new(240., 170., 20.),
-        60.,
-        tp(Dielectric::new(1.5)),
-    ));
-
-    // iron ball
-    objects.add(Sphere::new(
-        Point3::new(80., 150., 10.),
-        50.,
-        tp(Metal::new(RGBColor::new(0.8, 0.8, 0.9), 1.0)),
-    ));
-
-    // smooth blue ball
-    let boundary1 = Sphere::new(Point3::new(350., 150., 155.), 50., tp(Dielectric::new(1.5)));
-    objects.add(boundary1.clone());
-    objects.add(ConstantMedium::new(
-        tp(boundary1),
-        0.2,
-        tp(SolidColor::new_from_value(0.2, 0.4, 0.9)),
-    ));
-
-    // air
-    let boundary2 = Sphere::new(
-        Point3::new(0., 0., 0.),
-        5000.,
-        tp(Lambertian::new_from_color(RGBColor::default())),
-    );
-    objects.add(ConstantMedium::new(
-        tp(boundary2),
-        0.0001,
-        tp(SolidColor::new_from_value(1., 1., 1.)),
-    ));
-
-    // globe
-    let earth_texture = tp(ImageTexture::new_from_file(
-        &"texture/earth.jpg".to_string(),
-    ));
-    objects.add(Sphere::new(
-        Point3::new(380., 220., 400.),
-        120.,
-        tp(Lambertian::new(earth_texture)),
-    ));
-
-    // plastic foam
-    let mut plastic_foam_list = HittableList::default();
-    let white = tp(Lambertian::new_from_color(RGBColor::new(0.73, 0.73, 0.73)));
-    for _i in 0..1000 {
-        plastic_foam_list.add(Sphere::new(Vec3::rand_1() * 165., 10., white.clone()));
-    }
-    objects.add(Translate::new(
-        tp(RotateY::new(
-            tp(BvhNode::new_from_list(&plastic_foam_list, 0., 1.)),
-            15.,
-        )),
-        Vec3::new(-100., 270., 395.),
-    ));
-
-    objects
-}
-
-//---------------------------------------------------------------------------------
 fn main() {
-    print!("Initlizing...\t\t");
+    println!("{} {}Initlizing...", style("[1/5]").bold().dim(), INIT);
+    let begin_time = Instant::now();
 
-    //========================================================
+    const THREAD_NUMBER: usize = 8;
+
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: u32 = 1000;
-    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
-    let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
+    const IMAGE_WIDTH: usize = 1000;
+    const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
+    let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
     const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
 
-    //========================================================
     // World
-    let world;
-    let background;
+    let mut world = HittableList::default();
+    let mut background = RGBColor::default();
     // Camera
-    let look_from;
-    let look_at;
+    let mut look_from = Point3::default();
+    let mut look_at = Point3::default();
     let vup = Vec3::new(0., 1., 0.);
-    let vfov;
+    let mut vfov = 0.;
     let aperture = 0.;
     let focus_dist = 1.;
 
-    const SCENE_ID: i32 = 3;
+    const SCENE_ID: i32 = 4;
     match SCENE_ID {
         0 => {
-            world = tp(random_scene());
-            background = RGBColor::new(0.9, 0.9, 0.95);
-            look_from = Point3::new(13., 2., -3.);
-            look_at = Point3::new(0., 0., 0.);
-            vfov = 25.;
+            scene::random_scene(
+                &mut world,
+                &mut background,
+                &mut look_from,
+                &mut look_at,
+                &mut vfov,
+            );
         }
         1 => {
-            world = tp(simple_dark_scene());
-            background = RGBColor::new(0., 0., 0.);
-            look_from = Point3::new(26., 3., 6.);
-            look_at = Point3::new(0., 2., 0.);
-            vfov = 40.;
+            scene::simple_dark_scene(
+                &mut world,
+                &mut background,
+                &mut look_from,
+                &mut look_at,
+                &mut vfov,
+            );
         }
         2 => {
-            world = tp(cornell_box_bvh());
-            background = RGBColor::new(1., 1., 1.);
-            look_from = Point3::new(278., 278., -800.);
-            look_at = Point3::new(278., 278., 0.);
-            vfov = 40.;
+            scene::cornell_box(
+                &mut world,
+                &mut background,
+                &mut look_from,
+                &mut look_at,
+                &mut vfov,
+            );
         }
         3 => {
-            world = tp(book2_final_scene());
-            background = RGBColor::new(0., 0., 0.);
-            look_from = Point3::new(478., 278., -600.);
-            look_at = Point3::new(278., 278., 0.);
-            vfov = 40.;
+            scene::cornell_box_bvh(
+                &mut world,
+                &mut background,
+                &mut look_from,
+                &mut look_at,
+                &mut vfov,
+            );
+        }
+        4 => {
+            scene::book2_final_scene(
+                &mut world,
+                &mut background,
+                &mut look_from,
+                &mut look_at,
+                &mut vfov,
+            );
         }
         _ => {
             panic!("Unexpected SCENE_ID in main()!");
@@ -448,37 +145,131 @@ fn main() {
         1.,
     );
 
-    println!("Done.");
+    //========================================================
+
+    println!(
+        "{} {}Rendering with {} Threads...",
+        style("[2/5]").bold().dim(),
+        RUN,
+        THREAD_NUMBER,
+    );
+
+    const SECTION_LINE_NUM: usize = IMAGE_HEIGHT / THREAD_NUMBER;
+
+    let mut output_pixel_color = Vec::<RGBColor>::new();
+    let mut thread_pool = Vec::<_>::new();
+
+    let multiprogress = Arc::new(MultiProgress::new());
+    for thread_id in 0..THREAD_NUMBER {
+        let line_beg = SECTION_LINE_NUM * thread_id;
+        let mut line_end = line_beg + SECTION_LINE_NUM;
+        if line_end > IMAGE_HEIGHT || (thread_id == THREAD_NUMBER - 1 && line_end < IMAGE_HEIGHT) {
+            line_end = IMAGE_HEIGHT;
+        }
+
+        let section_world = world.clone();
+
+        let mp = multiprogress.clone();
+        let progress_bar = mp.add(ProgressBar::new((line_end - line_beg) as u64));
+        progress_bar.set_style(ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {finished_lines}/{total_lines} ({eta})")
+        .progress_chars("#>-"));
+
+        let (tx, rx) = mpsc::channel();
+
+        thread_pool.push((
+            thread::spawn(move || {
+                progress_bar.set_position(0);
+
+                let channel_send = tx;
+                let world_ptr = tp(section_world);
+
+                let mut section_pixel_color = Vec::<RGBColor>::new();
+
+                let mut rnd = rand::thread_rng();
+
+                for y in line_beg..line_end {
+                    for x in 0..IMAGE_WIDTH {
+                        let mut pixel_color = RGBColor::default();
+                        for _i in 0..SAMPLES_PER_PIXEL {
+                            let u = (x as f64 + rnd.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
+                            let v = (y as f64 + rnd.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
+                            let ray = cam.get_ray(u, v);
+                            pixel_color +=
+                                ray_color(&ray, world_ptr.clone(), &background, MAX_DEPTH);
+                        }
+                        section_pixel_color.push(pixel_color);
+                    }
+                    progress_bar.set_position((y - line_beg) as u64);
+                }
+                channel_send.send(section_pixel_color).unwrap();
+                progress_bar.finish_with_message("Finished.");
+            }),
+            rx,
+        ));
+    }
+    // 等待所有线程结束
+    multiprogress.join().unwrap();
 
     //========================================================
-    // Render
 
-    println!("Rendering Progress(Number of Line):");
-    let bar = ProgressBar::new(IMAGE_HEIGHT as u64);
-    // bar.set_style(ProgressStyle::default_spinner());
-    bar.tick();
+    println!(
+        "{} {}Collecting Threads Results...",
+        style("[3/5]").bold().dim(),
+        COLLECT,
+    );
 
-    let mut rnd = rand::thread_rng();
-    // let mut pixels: [[RGBColor; image_width as usize]; image_height as usize];
-    for y in 0..IMAGE_HEIGHT {
-        for x in 0..IMAGE_WIDTH {
-            let mut pixel_color = RGBColor::default();
-            for _i in 0..SAMPLES_PER_PIXEL {
-                let u = (x as f64 + rnd.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
-                let v = (y as f64 + rnd.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
-                let ray = cam.get_ray(u, v);
-                pixel_color += ray_color(&ray, world.clone(), &background, MAX_DEPTH);
+    let collecting_progress_bar = ProgressBar::new(THREAD_NUMBER as u64);
+    // join 和 recv 均会阻塞主线程
+    for _thread_id in 0..THREAD_NUMBER {
+        let thread = thread_pool.remove(0);
+        match thread.0.join() {
+            Ok(_) => {
+                let mut received = thread.1.recv().unwrap();
+                output_pixel_color.append(&mut received);
+                collecting_progress_bar.inc(1);
             }
-            let pixel = img.get_pixel_mut(x, IMAGE_HEIGHT - y - 1);
-            *pixel = image::Rgb(pixel_color.calc_color(SAMPLES_PER_PIXEL).to_u8_array());
+            Err(_) => {
+                println!("{}", style("Joining the {}th thread failed!").bold().red());
+            }
         }
-        bar.inc(1);
+    }
+    collecting_progress_bar.finish_and_clear();
+
+    //========================================================
+
+    println!(
+        "{} {}Generating Image...",
+        style("[4/5]").bold().dim(),
+        GENERATE,
+    );
+
+    let mut pixel_id = 0;
+    for y in 0..IMAGE_HEIGHT as u32 {
+        for x in 0..IMAGE_WIDTH as u32 {
+            let pixel = img.get_pixel_mut(x, IMAGE_HEIGHT as u32 - y - 1);
+            *pixel = image::Rgb(
+                output_pixel_color[pixel_id]
+                    .calc_color(SAMPLES_PER_PIXEL)
+                    .to_u8_array(),
+            );
+            pixel_id += 1;
+        }
     }
 
-    bar.finish();
-    println!("Generating Image...\tDone.");
-    print!("Outputing File...\t");
-    img.save("output/output.jpg").unwrap();
-    println!("Done.");
     //========================================================
+
+    println!("{} {}Outping Image...", style("[5/5]").bold().dim(), OUTPUT,);
+
+    img.save("output/output.jpg").unwrap();
+
+    //========================================================
+
+    println!(
+        " {} {}\n {} Elapsed Time: {}",
+        FINISH,
+        style("All Work Done.").bold().green(),
+        TIME,
+        HumanDuration(begin_time.elapsed()),
+    );
 }

@@ -5,6 +5,7 @@ use super::degree_to_radian;
 use super::ray::Ray;
 use super::vec3::{Point3, Vec3};
 
+#[derive(Clone, Copy)]
 pub struct Camera {
     orig: Point3,
     corner: Point3, // lower left corner    画面左下角坐标
