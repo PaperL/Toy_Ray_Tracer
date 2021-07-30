@@ -351,8 +351,8 @@ mod tests {
     fn test2() {
         for _i in 0..100000 {
             let k = Vec3::rand_cos_dir();
-            if k[0] == f64::NAN || k[1] == f64::NAN || k[2] == f64::NAN {
-                println!("1");
+            if k[0].is_nan() || k[1].is_nan() || k[2].is_nan() {
+                println!("Caught NAN!");
             }
         }
     }

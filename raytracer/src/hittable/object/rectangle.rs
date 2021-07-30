@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use std::{f64::INFINITY, sync::Arc};
+
+use rand::Rng;
 
 use super::super::{HitRecord, Hittable};
 
@@ -107,5 +109,45 @@ impl Hittable for Rectangle {
                 self.coo[2][1] + (if self.di[2] == 2 { thickness } else { 0. }),
             ),
         })
+    }
+
+    fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
+        if let Some(rec) = self.hit(&Ray::new(*orig, *dir, 0.), INFINITESIMAL, INFINITY) {
+            let a1 = self.coo[self.di[0]][0];
+            let a2 = self.coo[self.di[0]][1];
+            let a3 = self.coo[self.di[1]][0];
+            let a4 = self.coo[self.di[1]][1];
+            let area = (a2 - a1) * (a4 - a3);
+
+            let dis_sqrd = rec.t.powi(2) * dir.length_squared();
+            let cosine = (Vec3::dot(dir, &rec.normal) / dir.length()).abs();
+
+            dis_sqrd / (cosine * area)
+        } else {
+            0.
+        }
+    }
+
+    fn rand_dir(&self, orig: &Point3) -> Vec3 {
+        let mut rnd = rand::thread_rng();
+        let rand_point = Point3::new(
+            if self.di[2] == 0 {
+                self.coo[0][0]
+            } else {
+                rnd.gen_range(self.coo[0][0]..self.coo[0][1])
+            },
+            if self.di[2] == 1 {
+                self.coo[1][0]
+            } else {
+                rnd.gen_range(self.coo[1][0]..self.coo[1][1])
+            },
+            if self.di[2] == 2 {
+                self.coo[2][0]
+            } else {
+                rnd.gen_range(self.coo[2][0]..self.coo[2][1])
+            },
+        );
+
+        rand_point - *orig
     }
 }

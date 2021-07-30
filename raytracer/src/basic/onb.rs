@@ -1,13 +1,24 @@
-use super::{vec3::Vec3, INFINITESIMAL};
+use super::vec3::Vec3;
 
-#[derive(Default)]
 pub struct ONB {
     pub axis: [Vec3; 3],
 }
 
 impl ONB {
+    pub fn u(&self) -> Vec3 {
+        self.axis[0]
+    }
+    pub fn v(&self) -> Vec3 {
+        self.axis[1]
+    }
+    pub fn w(&self) -> Vec3 {
+        self.axis[2]
+    }
+
     pub fn build_from_w(n: &Vec3) -> Self {
-        let mut new_onb = ONB::default();
+        let mut new_onb = Self {
+            axis: Default::default(),
+        };
         new_onb.axis[2] = n.to_unit();
         let a = if new_onb.axis[2][0].abs() > 0.9 {
             Vec3::new(0., 1., 0.)

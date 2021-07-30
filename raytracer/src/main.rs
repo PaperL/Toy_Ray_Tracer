@@ -2,6 +2,7 @@ pub mod basic;
 pub mod bvh;
 pub mod hittable;
 pub mod material;
+pub mod pdf;
 mod scene;
 pub mod texture;
 
@@ -15,6 +16,7 @@ use std::{
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
+use pdf::{cos_pdf::CosinePDF, hittable_pdf::HittablePDF, MixedPDF, PDF};
 use rand::Rng;
 
 use crate::{
@@ -30,47 +32,37 @@ use crate::{
 
 //---------------------------------------------------------------------------------
 
-fn ray_color(ray: &Ray, item: Arc<dyn Hittable>, background: &RGBColor, depth: i32) -> RGBColor {
+fn ray_color(
+    ray: &Ray,
+    world: Arc<dyn Hittable>,
+    light: Arc<dyn Hittable>,
+    background: &RGBColor,
+    depth: i32,
+) -> RGBColor {
     if depth <= 0 {
         return RGBColor::default();
     }
-    if let Some(rec) = item.hit(ray, INFINITESIMAL, INFINITY) {
+    if let Some(rec) = world.hit(ray, INFINITESIMAL, INFINITY) {
         let emitted = rec.mat.emitted(ray, &rec, rec.u, rec.v, rec.p);
 
         if let Some((albedo, _scattered, _pdf)) = rec.mat.scatter(ray, &rec) {
-            let mut rnd = rand::thread_rng();
-            let on_light = Point3::new(
-                rnd.gen_range(213.0..343.0),
-                554.,
-                rnd.gen_range(227.0..332.0),
-            );
-            let mut to_light = on_light - rec.p;
-            let dis_sqrd = to_light.length_squared();
-            to_light = to_light.to_unit();
+            let light_pdf = HittablePDF::new(rec.p, light.clone());
+            let cos_pdf = CosinePDF::new(rec.normal);
+            let mixed_pdf = MixedPDF::new(tp(cos_pdf), tp(light_pdf));
 
-            if Vec3::dot(&to_light, &rec.normal) < 0. {
-                return emitted;
-            }
+            let scattered = Ray::new(rec.p, mixed_pdf.generate(), ray.tm);
+            let pdf_val = mixed_pdf.value(&scattered.dir);
 
-            let light_area = (343. - 213.) * (332. - 227.);
-            let light_cos = to_light.y.abs();
-            if light_cos < INFINITESIMAL {
-                return emitted;
-            }
-
-            let pdf = dis_sqrd / (light_cos * light_area);
-            let scattered = Ray::new(rec.p, to_light, ray.tm);
-
-            return emitted
+            emitted
                 + albedo
                     * rec.mat.scattering_pdf(&ray, &rec, &scattered)
-                    * ray_color(&scattered, item, background, depth - 1)
-                    / pdf;
+                    * ray_color(&scattered, world, light, background, depth - 1)
+                    / pdf_val
         } else {
-            return emitted;
+            emitted
         }
     } else {
-        return *background;
+        *background
     }
 }
 
@@ -82,7 +74,7 @@ fn main() {
     println!(
         "\n         {}  {}\n",
         style("PaperL's Toy Ray Tracer").cyan(),
-        style("v0.4.3").yellow(),
+        style("v0.4.4").yellow(),
     );
     println!(
         "{} 💿 {}",
@@ -91,15 +83,16 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 7;
+    const THREAD_NUMBER: usize = 5;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 500;
+    const IMAGE_WIDTH: usize = 2000;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
-    const SAMPLES_PER_PIXEL: u32 = 300;
+    const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
+    const IMAGE_FORMAT: &str = "jpg";
     println!(
         "         Image size:              {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()
@@ -115,7 +108,10 @@ fn main() {
 
     // World
     let mut world = HittableList::default();
+    let light;
+    let mut light_list = HittableList::default();
     let mut background = RGBColor::default();
+
     // Camera
     let mut look_from = Point3::default();
     let mut look_at = Point3::default();
@@ -124,58 +120,31 @@ fn main() {
     let aperture = 0.;
     let focus_dist = 1.;
 
-    const SCENE_ID: i32 = 3;
+    // Scene
+    const SCENE_ID: i32 = 0;
     match SCENE_ID {
-        // 0 => {
-        //     scene::random_scene(
-        //         &mut world,
-        //         &mut background,
-        //         &mut look_from,
-        //         &mut look_at,
-        //         &mut vfov,
-        //     );
-        // }
-        // 1 => {
-        //     scene::simple_dark_scene(
-        //         &mut world,
-        //         &mut background,
-        //         &mut look_from,
-        //         &mut look_at,
-        //         &mut vfov,
-        //     );
-        // }
-        // 2 => {
-        //     scene::cornell_box(
-        //         &mut world,
-        //         &mut background,
-        //         &mut look_from,
-        //         &mut look_at,
-        //         &mut vfov,
-        //     );
-        // }
-        3 => {
+        0 => {
             scene::cornell_box_bvh(
                 &mut world,
+                &mut light_list,
                 &mut background,
                 &mut look_from,
                 &mut look_at,
                 &mut vfov,
             );
         }
-        // 4 => {
-        //     scene::book2_final_scene(
-        //         &mut world,
-        //         &mut background,
-        //         &mut look_from,
-        //         &mut look_at,
-        //         &mut vfov,
-        //     );
-        // }
         _ => {
             panic!("Unexpected SCENE_ID in main()!");
         }
     }
 
+    if light_list.objects.len() > 1 {
+        panic!("Have more than 1 objects in light_list!");
+    } else {
+        light = light_list.objects[0].clone();
+    }
+
+    // Camera
     let cam = Camera::new(
         look_from,
         look_at,
@@ -214,6 +183,7 @@ fn main() {
         }
 
         let section_world = world.clone();
+        let section_light = light.clone();
 
         let mp = multiprogress.clone();
         let progress_bar = mp.add(ProgressBar::new(
@@ -244,8 +214,13 @@ fn main() {
                             let u = (x as f64 + rnd.gen::<f64>()) / (IMAGE_WIDTH - 1) as f64;
                             let v = (y as f64 + rnd.gen::<f64>()) / (IMAGE_HEIGHT - 1) as f64;
                             let ray = cam.get_ray(u, v);
-                            pixel_color +=
-                                ray_color(&ray, world_ptr.clone(), &background, MAX_DEPTH);
+                            pixel_color += ray_color(
+                                &ray,
+                                world_ptr.clone(),
+                                section_light.clone(),
+                                &background,
+                                MAX_DEPTH,
+                            );
                         }
                         section_pixel_color.push(pixel_color);
 
@@ -316,7 +291,8 @@ fn main() {
         style("Outping Image...").green()
     );
 
-    img.save("output/output.jpg").unwrap();
+    img.save("output/output.".to_owned() + IMAGE_FORMAT)
+        .unwrap();
 
     //========================================================
 

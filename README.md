@@ -45,11 +45,15 @@
 
 
 
-## 当前版本运行结果
+## 当前版本运行结果缩略图
 
 ![Output](output/preview.jpg)
 
-> 本地 8 线程并行计算，渲染总耗时 17 秒
+> 最终渲染图由本地 7 线程并行计算，渲染总耗时 40 分钟
+>
+> 运行指令 `make run-release`
+>
+> 代码检查指令 `clippy --all-targets --all-features`
 >
 > 部分版本运行结果由 GitHub Action 自动生成并上传至 Release
 

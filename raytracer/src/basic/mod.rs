@@ -1,7 +1,7 @@
 pub mod camera;
+pub mod onb;
 pub mod ray;
 pub mod vec3;
-pub mod onb;
 
 use std::{f64::consts::PI, sync::Arc};
 

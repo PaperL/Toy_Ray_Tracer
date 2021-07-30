@@ -27,6 +27,7 @@ impl Hittable for Translate {
         if let Some(mut rec) = self.item.hit(&moved_ray, t_min, t_max) {
             rec.p += self.offset;
             rec.set_face_normal(&moved_ray, &rec.normal.clone());
+
             Some(rec)
         } else {
             None

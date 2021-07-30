@@ -18,6 +18,14 @@ pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 
     fn bounding_box(&self, tm: f64, dur: f64) -> Option<AABB>;
+
+    fn pdf_value(&self, _orig: &Point3, _dir: &Vec3) -> f64 {
+        0.
+    }
+
+    fn rand_dir(&self, _orig: &Vec3) -> Vec3 {
+        Vec3::new(1., 0., 0.)
+    }
 }
 
 //=================================================
@@ -114,3 +122,26 @@ impl Hittable for HittableList {
         Some(tot_box)
     }
 }
+
+// //=================================================
+
+// #[derive(Default, Clone, Copy)]
+// pub struct NullHittable {}
+
+// impl Hittable for NullHittable {
+//     fn hit(&self, _ray: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
+//         panic!("Call hit() of NullHittable");
+//     }
+
+//     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
+//         panic!("Call bouding_box() of NullHittable");
+//     }
+
+//     fn pdf_value(&self, _orig: &Point3, _dir: &Vec3) -> f64 {
+//         panic!("Call pdf_value() of NullHittable");
+//     }
+
+//     fn rand_dir(&self, _orig: &Vec3) -> Vec3 {
+//         panic!("Call rand_dir() of NullHittable");
+//     }
+// }
