@@ -10,15 +10,12 @@ use crate::{
             cube::Cube,
             //   moving_sphere::MovingSphere,
             rectangle::Rectangle,
-            // sphere::Sphere,
+            sphere::Sphere,
         },
         HittableList,
     },
     material::{
-        // dielectric::Dielectric
-        diffuse_light::DiffuseLight,
-        lambertian::Lambertian,
-        metal::Metal,
+        dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, metal::Metal,
     },
     texture::solid_color::SolidColor,
 };
@@ -51,6 +48,7 @@ pub fn cornell_box_bvh(
     });
     let light = tp(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
     let aluminum = tp(Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.));
+    let glass = tp(Dielectric::new(1.5));
 
     // Wall
     tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red)));
@@ -87,33 +85,25 @@ pub fn cornell_box_bvh(
     )))));
 
     // Cube
-    let cube1 = Cube::new(
+    let cube = Cube::new(
         Point3::new(0., 0., 0.),
         Point3::new(165., 330., 165.),
         aluminum,
     );
-
-    let cube2 = Cube::new(
-        Point3::new(0., 0., 0.),
-        Point3::new(165., 165., 165.),
-        white,
-    );
-
-    let moved_cube1 = Translate {
-        item: tp(RotateY::new(tp(cube1), 15.)),
+    let moved_cube = Translate {
+        item: tp(RotateY::new(tp(cube), 15.)),
         offset: Vec3::new(265., 0., 295.),
     };
+    tmp_world.add(tp(moved_cube));
 
-    let moved_cube2 = Translate {
-        item: tp(RotateY::new(tp(cube2), -18.)),
-        offset: Vec3::new(130., 0., 65.),
-    };
-
-    tmp_world.add(tp(moved_cube1));
-    tmp_world.add(tp(moved_cube2));
+    tmp_world.add(tp(Sphere::new(
+        Point3::new(190., 90., 190.),
+        90.,
+        glass.clone(),
+    )));
 
     world.add(tp(tmp_world));
     // world.add(tp(BvhNode::new_from_list(&tmp_world, 0., 1.)));
 
-    lights.add(tp(Rectangle::new(2, 213., 343., 227., 332., 554., light)));
+    lights.add(tp(Sphere::new(Point3::new(190., 90., 190.), 90., glass)));
 }

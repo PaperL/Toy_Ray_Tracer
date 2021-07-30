@@ -115,6 +115,19 @@ impl Vec3 {
         Vec3::new(x, y, z)
     }
 
+    pub fn rand_to_sphere(r: f64, dis_sqrd: f64) -> Vec3 {
+        let mut rnd: ThreadRng = rand::thread_rng();
+        let r1 = rnd.gen::<f64>();
+        let r2 = rnd.gen::<f64>();
+        let z = 1. + ((1. - r.powi(2) / dis_sqrd).sqrt() - 1.) * r2;
+
+        let phi = 2. * PI * r1;
+        let x = f64::cos(phi) * (1. - z.powi(2)).sqrt();
+        let y = f64::sin(phi) * (1. - z.powi(2)).sqrt();
+
+        Vec3::new(x, y, z)
+    }
+
     pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
         (*v) - (*n) * Vec3::dot(&v, &n) * 2.
     }

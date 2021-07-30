@@ -1,12 +1,17 @@
-use std::{f64::consts::PI, sync::Arc};
+use std::{
+    f64::{consts::PI, INFINITY},
+    sync::Arc,
+};
 
 use super::super::{HitRecord, Hittable};
 
 use crate::{
     basic::{
         clamp_hoi,
+        onb::ONB,
         ray::Ray,
         vec3::{Point3, Vec3},
+        INFINITESIMAL,
     },
     bvh::aabb::AABB,
     material::Material,
@@ -82,5 +87,24 @@ impl Hittable for Sphere {
             self.cen - Vec3::new(self.r, self.r, self.r),
             self.cen + Vec3::new(self.r, self.r, self.r),
         ))
+    }
+
+    fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
+        if let Some(_hit_rec) = self.hit(&Ray::new(*orig, *dir, 0.), INFINITESIMAL, INFINITY) {
+            let cos_theta_max = (1. - self.r.powi(2) / (self.cen - *orig).length_squared()).sqrt();
+            let solid_angle = 2. * PI * (1. - cos_theta_max);
+
+            1. / solid_angle
+        } else {
+            0.
+        }
+    }
+
+    fn rand_dir(&self, orig: &Vec3) -> Vec3 {
+        let dir = self.cen - *orig;
+        let dis_sqrd = dir.length_squared();
+        let uvw = ONB::build_from_w(&dir);
+
+        uvw.local(&Vec3::rand_to_sphere(self.r, dis_sqrd))
     }
 }

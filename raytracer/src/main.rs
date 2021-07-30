@@ -88,7 +88,7 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 5;
+    const THREAD_NUMBER: usize = 8;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
