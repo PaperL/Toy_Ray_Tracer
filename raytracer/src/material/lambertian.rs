@@ -2,14 +2,17 @@ use std::{f64::consts::PI, sync::Arc};
 
 use crate::{
     basic::{
-        onb::ONB,
         ray::Ray,
+        tp,
         vec3::{RGBColor, Vec3},
     },
     hittable::HitRecord,
     material::Material,
+    pdf::cos_pdf::CosinePDF,
     texture::{solid_color::SolidColor, Texture},
 };
+
+use super::ScatterRecord;
 
 pub struct Lambertian {
     pub albedo: Arc<dyn Texture>,
@@ -28,22 +31,15 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Vec3, Ray, f64)> {
-        let uvw = ONB::build_from_w(&rec.normal);
-        let dir = uvw.local(&Vec3::rand_cos_dir());
-        let scattered = Ray::new(rec.p, dir.to_unit(), ray.tm);
-        let albedo = self.albedo.value(rec.u, rec.v, rec.p);
-        let pdf = Vec3::dot(&uvw.axis[2], &scattered.dir) / PI;
-        // println!("scatter {} {} {}", albedo, scattered.dir, pdf);
-
-        Some((albedo, scattered, pdf))
+    fn scatter(&self, _ray: &Ray, hit_rec: &HitRecord) -> Option<ScatterRecord> {
+        Some(ScatterRecord::new_not_specular(
+            tp(CosinePDF::new(hit_rec.normal)),
+            self.albedo.value(hit_rec.u, hit_rec.v, hit_rec.p),
+        ))
     }
 
-    fn scattering_pdf(&self, _ray: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
-        let cosine = Vec3::dot(&rec.normal, &scattered.dir.to_unit());
-
-        // println!("pdf {}", cosine / PI);
-
+    fn scattering_pdf(&self, _ray: &Ray, hit_rec: &HitRecord, scattered: &Ray) -> f64 {
+        let cosine = Vec3::dot(&hit_rec.normal, &scattered.dir.to_unit());
         if cosine.is_sign_negative() {
             0.
         } else {

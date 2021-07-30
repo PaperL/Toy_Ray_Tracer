@@ -16,7 +16,7 @@ use std::{
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
-use pdf::{cos_pdf::CosinePDF, hittable_pdf::HittablePDF, MixedPDF, PDF};
+use pdf::{hittable_pdf::HittablePDF, MixedPDF, PDF};
 use rand::Rng;
 
 use crate::{
@@ -42,20 +42,21 @@ fn ray_color(
     if depth <= 0 {
         return RGBColor::default();
     }
-    if let Some(rec) = world.hit(ray, INFINITESIMAL, INFINITY) {
-        let emitted = rec.mat.emitted(ray, &rec, rec.u, rec.v, rec.p);
+    if let Some(hit_rec) = world.hit(ray, INFINITESIMAL, INFINITY) {
+        let emitted = hit_rec
+            .mat
+            .emitted(ray, &hit_rec, hit_rec.u, hit_rec.v, hit_rec.p);
 
-        if let Some((albedo, _scattered, _pdf)) = rec.mat.scatter(ray, &rec) {
-            let light_pdf = HittablePDF::new(rec.p, light.clone());
-            let cos_pdf = CosinePDF::new(rec.normal);
-            let mixed_pdf = MixedPDF::new(tp(cos_pdf), tp(light_pdf));
+        if let Some(sca_rec) = hit_rec.mat.scatter(ray, &hit_rec) {
+            let light_pdf = HittablePDF::new(hit_rec.p, light.clone());
+            let mixed_pdf = MixedPDF::new(tp(light_pdf), sca_rec.pdf.unwrap());
 
-            let scattered = Ray::new(rec.p, mixed_pdf.generate(), ray.tm);
+            let scattered = Ray::new(hit_rec.p, mixed_pdf.generate(), ray.tm);
             let pdf_val = mixed_pdf.value(&scattered.dir);
 
             emitted
-                + albedo
-                    * rec.mat.scattering_pdf(&ray, &rec, &scattered)
+                + sca_rec.attenutaion
+                    * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
                     * ray_color(&scattered, world, light, background, depth - 1)
                     / pdf_val
         } else {
@@ -87,10 +88,10 @@ fn main() {
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 2000;
+    const IMAGE_WIDTH: usize = 500;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
-    const SAMPLES_PER_PIXEL: u32 = 1000;
+    const SAMPLES_PER_PIXEL: u32 = 200;
     const MAX_DEPTH: i32 = 50;
     const IMAGE_FORMAT: &str = "jpg";
     println!(
