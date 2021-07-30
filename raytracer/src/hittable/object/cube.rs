@@ -35,6 +35,7 @@ impl Cube {
             cube_max.y,
             cube_min.z,
             mat.clone(),
+            false,
         )));
         tmp_cube.sides.add(tp(Rectangle::new(
             0,
@@ -44,6 +45,7 @@ impl Cube {
             cube_max.y,
             cube_max.z,
             mat.clone(),
+            true,
         )));
         tmp_cube.sides.add(tp(Rectangle::new(
             1,
@@ -53,6 +55,7 @@ impl Cube {
             cube_max.z,
             cube_min.x,
             mat.clone(),
+            false,
         )));
         tmp_cube.sides.add(tp(Rectangle::new(
             1,
@@ -62,6 +65,7 @@ impl Cube {
             cube_max.z,
             cube_max.x,
             mat.clone(),
+            true,
         )));
         tmp_cube.sides.add(tp(Rectangle::new(
             2,
@@ -71,9 +75,10 @@ impl Cube {
             cube_max.z,
             cube_min.y,
             mat.clone(),
+            false,
         )));
         tmp_cube.sides.add(tp(Rectangle::new(
-            2, cube_min.x, cube_max.x, cube_min.z, cube_max.z, cube_max.y, mat,
+            2, cube_min.x, cube_max.x, cube_min.z, cube_max.z, cube_max.y, mat, true,
         )));
 
         tmp_cube

@@ -52,6 +52,8 @@
 
 ![Output](output/preview.jpg)
 
+> 图为封闭的康奈尔盒子
+>
 > 运行指令 `make run-release`
 >
 > 代码检查指令 `clippy --all-targets --all-features`

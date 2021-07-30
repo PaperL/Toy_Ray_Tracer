@@ -47,14 +47,25 @@ pub fn cornell_box_bvh(
     let white = tp(Lambertian {
         albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
     });
-    let light = tp(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
+    let light = tp(DiffuseLight::new_from_color(RGBColor::new(1., 1., 1.)));
     let aluminum = tp(Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.));
     let glass = tp(Dielectric::new(1.5));
 
     // Wall
-    objects.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red)));
-    objects.add(tp(Rectangle::new(1, 0., 555., 0., 555., 555., green)));
-    objects.add(tp(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone())));
+    objects.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red, true)));
+    objects.add(tp(Rectangle::new(
+        1, 0., 555., 0., 555., 555., green, false,
+    )));
+    objects.add(tp(Rectangle::new(
+        2,
+        0.,
+        555.,
+        0.,
+        555.,
+        0.,
+        white.clone(),
+        true,
+    )));
     objects.add(tp(Rectangle::new(
         2,
         0.,
@@ -63,6 +74,17 @@ pub fn cornell_box_bvh(
         555.,
         555.,
         white.clone(),
+        false,
+    )));
+    objects.add(tp(Rectangle::new(
+        0,
+        0.,
+        555.,
+        0.,
+        555.,
+        0.,
+        white.clone(),
+        true,
     )));
     objects.add(tp(Rectangle::new(
         0,
@@ -72,6 +94,7 @@ pub fn cornell_box_bvh(
         555.,
         555.,
         white.clone(),
+        false,
     )));
 
     // Light
@@ -83,6 +106,7 @@ pub fn cornell_box_bvh(
         332.,
         554.,
         light.clone(),
+        false,
     )))));
 
     // Cube
@@ -111,6 +135,7 @@ pub fn cornell_box_bvh(
         332.,
         554.,
         light.clone(),
+        true,
     )));
     lights.add(tp(glass_ball));
 }

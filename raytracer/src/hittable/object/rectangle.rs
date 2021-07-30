@@ -20,6 +20,7 @@ pub struct Rectangle {
     pub coo: [[f64; 2]; 3],
     pub mat: Arc<dyn Material>,
     di: [usize; 3], // dimension index
+    face_coo_pos: bool,
 }
 
 impl Rectangle {
@@ -31,12 +32,14 @@ impl Rectangle {
         a4: f64,
         k: f64,
         mat: Arc<dyn Material>,
+        face_coo_pos: bool,
     ) -> Self {
         let mut tr = Rectangle {
             dir,
             coo: Default::default(),
             mat,
             di: Default::default(),
+            face_coo_pos,
         }; // temp rectangle
 
         match dir {
@@ -85,14 +88,18 @@ impl Hittable for Rectangle {
             _ => panic!("Get unexpected dir in Rectangle::hit!"),
         };
 
-        Some(HitRecord::new(
-            (b1 - a1) / (a2 - a1),
-            (b2 - a3) / (a4 - a3),
-            t,
-            ray,
-            &outward_normal,
-            self.mat.clone(),
-        ))
+        if (Vec3::dot(&outward_normal, &ray.dir) > 0.) != self.face_coo_pos {
+            Some(HitRecord::new(
+                (b1 - a1) / (a2 - a1),
+                (b2 - a3) / (a4 - a3),
+                t,
+                ray,
+                &outward_normal,
+                self.mat.clone(),
+            ))
+        } else {
+            None
+        }
     }
 
     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
