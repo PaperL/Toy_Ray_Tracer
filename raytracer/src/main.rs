@@ -35,7 +35,7 @@ use crate::{
 fn ray_color(
     ray: &Ray,
     world: Arc<dyn Hittable>,
-    light: Arc<dyn Hittable>,
+    lights: Arc<dyn Hittable>,
     background: &RGBColor,
     depth: i32,
 ) -> RGBColor {
@@ -49,9 +49,9 @@ fn ray_color(
 
         if let Some(sca_rec) = hit_rec.mat.scatter(ray, &hit_rec) {
             if let Some(specular_ray) = sca_rec.specular {
-                sca_rec.attenutaion * ray_color(&specular_ray, world, light, background, depth - 1)
+                sca_rec.attenutaion * ray_color(&specular_ray, world, lights, background, depth - 1)
             } else {
-                let light_pdf = HittablePDF::new(hit_rec.p, light.clone());
+                let light_pdf = HittablePDF::new(hit_rec.p, lights.clone());
                 let mixed_pdf = MixedPDF::new(tp(light_pdf), sca_rec.pdf.unwrap());
 
                 let scattered = Ray::new(hit_rec.p, mixed_pdf.generate(), ray.tm);
@@ -60,7 +60,7 @@ fn ray_color(
                 emitted
                     + sca_rec.attenutaion
                         * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
-                        * ray_color(&scattered, world, light, background, depth - 1)
+                        * ray_color(&scattered, world, lights, background, depth - 1)
                         / pdf_val
             }
         } else {
@@ -79,7 +79,7 @@ fn main() {
     println!(
         "\n         {}  {}\n",
         style("PaperL's Toy Ray Tracer").cyan(),
-        style("v0.4.4").yellow(),
+        style("v0.4.5").yellow(),
     );
     println!(
         "{} 💿 {}",
@@ -92,10 +92,10 @@ fn main() {
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 500;
+    const IMAGE_WIDTH: usize = 300;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
-    const SAMPLES_PER_PIXEL: u32 = 200;
+    const SAMPLES_PER_PIXEL: u32 = 100;
     const MAX_DEPTH: i32 = 50;
     const IMAGE_FORMAT: &str = "jpg";
     println!(
@@ -113,8 +113,7 @@ fn main() {
 
     // World
     let mut world = HittableList::default();
-    let light;
-    let mut light_list = HittableList::default();
+    let mut lights = HittableList::default();
     let mut background = RGBColor::default();
 
     // Camera
@@ -131,7 +130,7 @@ fn main() {
         0 => {
             scene::cornell_box_bvh(
                 &mut world,
-                &mut light_list,
+                &mut lights,
                 &mut background,
                 &mut look_from,
                 &mut look_at,
@@ -141,12 +140,6 @@ fn main() {
         _ => {
             panic!("Unexpected SCENE_ID in main()!");
         }
-    }
-
-    if light_list.objects.len() > 1 {
-        panic!("Have more than 1 objects in light_list!");
-    } else {
-        light = light_list.objects[0].clone();
     }
 
     // Camera
@@ -188,7 +181,7 @@ fn main() {
         }
 
         let section_world = world.clone();
-        let section_light = light.clone();
+        let section_lights = lights.clone();
 
         let mp = multiprogress.clone();
         let progress_bar = mp.add(ProgressBar::new(
@@ -207,6 +200,7 @@ fn main() {
 
                 let channel_send = tx;
                 let world_ptr = tp(section_world);
+                let lights_ptr = tp(section_lights);
 
                 let mut section_pixel_color = Vec::<RGBColor>::new();
 
@@ -222,7 +216,7 @@ fn main() {
                             pixel_color += ray_color(
                                 &ray,
                                 world_ptr.clone(),
-                                section_light.clone(),
+                                lights_ptr.clone(),
                                 &background,
                                 MAX_DEPTH,
                             );

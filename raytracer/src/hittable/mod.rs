@@ -3,6 +3,8 @@ pub mod object;
 
 use std::sync::Arc;
 
+use rand::prelude::SliceRandom;
+
 use crate::{
     basic::{
         ray::Ray,
@@ -99,6 +101,7 @@ impl Hittable for HittableList {
                 rec = Some(temp_rec);
             }
         }
+
         rec
     }
 
@@ -119,29 +122,25 @@ impl Hittable for HittableList {
                 }
             }
         }
+
         Some(tot_box)
     }
+
+    fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
+        let weight = 1. / self.objects.len() as f64;
+        let mut sum = 0.;
+
+        for obj in &self.objects {
+            sum += obj.pdf_value(orig, dir) * weight;
+        }
+
+        sum
+    }
+
+    fn rand_dir(&self, orig: &Vec3) -> Vec3 {
+        self.objects
+            .choose(&mut rand::thread_rng())
+            .unwrap()
+            .rand_dir(orig)
+    }
 }
-
-// //=================================================
-
-// #[derive(Default, Clone, Copy)]
-// pub struct NullHittable {}
-
-// impl Hittable for NullHittable {
-//     fn hit(&self, _ray: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
-//         panic!("Call hit() of NullHittable");
-//     }
-
-//     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
-//         panic!("Call bouding_box() of NullHittable");
-//     }
-
-//     fn pdf_value(&self, _orig: &Point3, _dir: &Vec3) -> f64 {
-//         panic!("Call pdf_value() of NullHittable");
-//     }
-
-//     fn rand_dir(&self, _orig: &Vec3) -> Vec3 {
-//         panic!("Call rand_dir() of NullHittable");
-//     }
-// }

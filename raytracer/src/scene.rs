@@ -3,6 +3,7 @@ use crate::{
         tp,
         vec3::{Point3, RGBColor, Vec3},
     },
+    bvh::bvh_node::BvhNode,
     hittable::{
         instance::{flip::Flip, rotate_y::RotateY, translate::Translate},
         object::{
@@ -34,7 +35,7 @@ pub fn cornell_box_bvh(
     *look_at = Point3::new(278., 278., 0.);
     *vfov = 40.;
 
-    let mut tmp_world = HittableList::default();
+    let mut objects = HittableList::default();
 
     // Material
     let red = tp(Lambertian {
@@ -51,10 +52,10 @@ pub fn cornell_box_bvh(
     let glass = tp(Dielectric::new(1.5));
 
     // Wall
-    tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red)));
-    tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 555., green)));
-    tmp_world.add(tp(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone())));
-    tmp_world.add(tp(Rectangle::new(
+    objects.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red)));
+    objects.add(tp(Rectangle::new(1, 0., 555., 0., 555., 555., green)));
+    objects.add(tp(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone())));
+    objects.add(tp(Rectangle::new(
         2,
         0.,
         555.,
@@ -63,7 +64,7 @@ pub fn cornell_box_bvh(
         555.,
         white.clone(),
     )));
-    tmp_world.add(tp(Rectangle::new(
+    objects.add(tp(Rectangle::new(
         0,
         0.,
         555.,
@@ -74,7 +75,7 @@ pub fn cornell_box_bvh(
     )));
 
     // Light
-    tmp_world.add(tp(Flip::new(tp(Rectangle::new(
+    objects.add(tp(Flip::new(tp(Rectangle::new(
         2,
         213.,
         343.,
@@ -94,16 +95,22 @@ pub fn cornell_box_bvh(
         item: tp(RotateY::new(tp(cube), 15.)),
         offset: Vec3::new(265., 0., 295.),
     };
-    tmp_world.add(tp(moved_cube));
+    objects.add(tp(moved_cube));
 
-    tmp_world.add(tp(Sphere::new(
-        Point3::new(190., 90., 190.),
-        90.,
-        glass.clone(),
+    let glass_ball = Sphere::new(Point3::new(190., 90., 190.), 90., glass.clone());
+    objects.add(tp(glass_ball.clone()));
+
+    // world.add(tp(objects));
+    world.add(tp(BvhNode::new_from_list(&objects, 0., 1.)));
+
+    lights.add(tp(Rectangle::new(
+        2,
+        213.,
+        343.,
+        227.,
+        332.,
+        554.,
+        light.clone(),
     )));
-
-    world.add(tp(tmp_world));
-    // world.add(tp(BvhNode::new_from_list(&tmp_world, 0., 1.)));
-
-    lights.add(tp(Sphere::new(Point3::new(190., 90., 190.), 90., glass)));
+    lights.add(tp(glass_ball));
 }

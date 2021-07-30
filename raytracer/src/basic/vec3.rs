@@ -148,6 +148,7 @@ impl RGBColor {
 
     pub fn calc_color(&mut self, samples_per_pixel: u32) -> &Self {
         let scale = 1. / samples_per_pixel as f64;
+        // sqrt means gamma-correct
         self.x = clamp_hoi((self.x * scale).sqrt() * 256., 0., 256.);
         self.y = clamp_hoi((self.y * scale).sqrt() * 256., 0., 256.);
         self.z = clamp_hoi((self.z * scale).sqrt() * 256., 0., 256.);
