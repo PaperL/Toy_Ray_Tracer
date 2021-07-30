@@ -28,11 +28,11 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, _ray: &Ray, _rec: &HitRecord) -> Option<(Ray, Vec3)> {
-        None
-    }
-
-    fn emitted(&self, u: f64, v: f64, p: Point3) -> RGBColor {
-        self.emit.value(u, v, p)
+    fn emitted(&self, _ray: &Ray, rec: &HitRecord, u: f64, v: f64, p: Point3) -> RGBColor {
+        if rec.front_face {
+            self.emit.value(u, v, p)
+        } else {
+            Vec3::default()
+        }
     }
 }

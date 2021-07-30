@@ -1,12 +1,13 @@
 pub mod camera;
 pub mod ray;
 pub mod vec3;
+pub mod onb;
 
 use std::{f64::consts::PI, sync::Arc};
 
 use rand::{prelude::ThreadRng, Rng};
 
-pub const INFINITESIMAL: f64 = 0.0001;
+pub const INFINITESIMAL: f64 = 0.0000001;
 
 pub fn rand_1() -> f64 {
     let mut rnd: ThreadRng = rand::thread_rng();

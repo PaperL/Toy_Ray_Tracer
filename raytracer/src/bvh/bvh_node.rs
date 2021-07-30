@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, sync::Arc};
 
-use rand::{prelude::ThreadRng, Rng};
+use rand::Rng;
 
 use super::aabb::AABB;
 use crate::{
@@ -34,12 +34,12 @@ impl BvhNode {
     }
 
     pub fn new_from_vec(mut objects: Vec<Arc<dyn Hittable>>, tm: f64, dur: f64) -> Self {
-        let mut rnd: ThreadRng = rand::thread_rng();
+        let mut rnd = rand::thread_rng();
         let axis = rnd.gen_range(0..3);
         let comparator = |x: &Arc<dyn Hittable>, y: &Arc<dyn Hittable>| {
             f64::partial_cmp(
-                &(x.bounding_box(0., 0.).unwrap().min[axis]),
-                &(y.bounding_box(0., 0.).unwrap().min[axis]),
+                &(x.bounding_box(tm, dur).unwrap().min[axis]),
+                &(y.bounding_box(tm, dur).unwrap().min[axis]),
             )
             .unwrap()
         };

@@ -86,6 +86,9 @@ impl Hittable for Cube {
     }
 
     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
-        Some(AABB::new(self.cube_min, self.cube_max))
+        Some(AABB::new(
+            self.cube_min, //- INFINITESIMAL,
+            self.cube_max, //+ INFINITESIMAL,
+        ))
     }
 }

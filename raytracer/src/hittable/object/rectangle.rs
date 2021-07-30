@@ -94,16 +94,17 @@ impl Hittable for Rectangle {
     }
 
     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
+        let thickness = 10. * INFINITESIMAL;
         Some(AABB {
             min: Point3::new(
-                self.coo[0][0] + (if self.di[2] == 0 { -INFINITESIMAL } else { 0. }),
-                self.coo[1][0] + (if self.di[2] == 1 { -INFINITESIMAL } else { 0. }),
-                self.coo[2][0] + (if self.di[2] == 2 { -INFINITESIMAL } else { 0. }),
+                self.coo[0][0] + (if self.di[2] == 0 { -thickness } else { 0. }),
+                self.coo[1][0] + (if self.di[2] == 1 { -thickness } else { 0. }),
+                self.coo[2][0] + (if self.di[2] == 2 { -thickness } else { 0. }),
             ),
             max: Point3::new(
-                self.coo[0][1] + (if self.di[2] == 0 { INFINITESIMAL } else { 0. }),
-                self.coo[1][1] + (if self.di[2] == 1 { INFINITESIMAL } else { 0. }),
-                self.coo[2][1] + (if self.di[2] == 2 { INFINITESIMAL } else { 0. }),
+                self.coo[0][1] + (if self.di[2] == 0 { thickness } else { 0. }),
+                self.coo[1][1] + (if self.di[2] == 1 { thickness } else { 0. }),
+                self.coo[2][1] + (if self.di[2] == 2 { thickness } else { 0. }),
             ),
         })
     }

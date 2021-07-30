@@ -7,21 +7,27 @@ use crate::{
     },
     bvh::bvh_node::BvhNode,
     hittable::{
-        instance::{rotate_y::RotateY, translate::Translate},
+        instance::{flip::Flip, rotate_y::RotateY, translate::Translate},
         object::{
-            constant_medium::ConstantMedium, cube::Cube, moving_sphere::MovingSphere,
-            rectangle::Rectangle, sphere::Sphere,
+            // constant_medium::ConstantMedium,
+            cube::Cube,
+            //   moving_sphere::MovingSphere,
+            rectangle::Rectangle,
+            // sphere::Sphere,
         },
         HittableList,
     },
     material::{
-        dielectric::Dielectric, diffuse_light::DiffuseLight, lambertian::Lambertian, metal::Metal,
+        // dielectric::Dielectric
+        diffuse_light::DiffuseLight,
+        lambertian::Lambertian,
+        //   metal::Metal,
     },
     texture::{
         checker_texture::CheckerTexture, image_texture::ImageTexture, solid_color::SolidColor,
     },
 };
-
+/*
 pub fn random_scene(
     world: &mut HittableList,
     background: &mut RGBColor,
@@ -193,6 +199,86 @@ pub fn simple_dark_scene(
     )));
 }
 
+pub fn cornell_box(
+    world: &mut HittableList,
+    background: &mut RGBColor,
+    look_from: &mut Point3,
+    look_at: &mut Point3,
+    vfov: &mut f64,
+) {
+    *world = HittableList::default();
+    *background = RGBColor::new(1., 1., 1.);
+    *look_from = Point3::new(278., 278., -800.);
+    *look_at = Point3::new(278., 278., 0.);
+    *vfov = 40.;
+
+    let red = tp(Lambertian {
+        albedo: tp(SolidColor::new_from_value(0.65, 0.05, 0.05)),
+    });
+    let green = tp(Lambertian {
+        albedo: tp(SolidColor::new_from_value(0.12, 0.45, 0.15)),
+    });
+    let white = tp(Lambertian {
+        albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
+    });
+    let light = tp(DiffuseLight::new_from_color(RGBColor::new(20., 20., 20.)));
+
+    world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red.clone())));
+    world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 555., green)));
+    world.add(tp(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone())));
+    world.add(tp(Rectangle::new(
+        2,
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+    world.add(tp(Rectangle::new(0, 0., 555., 0., 555., 555., white)));
+
+    // world.add(tp(Rectangle::new(
+    //     2,
+    //     213.,
+    //     343.,
+    //     227.,
+    //     332.,
+    //     554.,
+    //     light.clone(),
+    // )));
+
+    let cube1 = Cube::new(
+        Point3::new(0., 0., 0.),
+        Point3::new(165., 330., 165.),
+        red.clone(),
+    );
+
+    let cube2 = Cube::new(Point3::new(0., 0., 0.), Point3::new(165., 165., 165.), red);
+
+    let moved_cube1 = Translate {
+        item: tp(RotateY::new(tp(cube1), 15.)),
+        offset: Vec3::new(265., 0., 295.),
+    };
+
+    let moved_cube2 = Translate {
+        item: tp(RotateY::new(tp(cube2), -18.)),
+        offset: Vec3::new(130., 0., 65.),
+    };
+
+    world.add(tp(moved_cube1));
+    world.add(tp(moved_cube2));
+
+    // lamp
+    for _i in 0..500 {
+        let bulb = Sphere::new(Point3::rand_unit() * 70., rand_1(), light.clone());
+        let t_bulb = Translate {
+            item: tp(bulb),
+            offset: Vec3::new(277., 570., 277.),
+        };
+        world.add(tp(t_bulb));
+    }
+}
+*/
 pub fn cornell_box_bvh(
     world: &mut HittableList,
     background: &mut RGBColor,
@@ -217,9 +303,9 @@ pub fn cornell_box_bvh(
     let white = tp(Lambertian {
         albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
     });
-    let light = tp(DiffuseLight::new_from_color(RGBColor::new(30., 30., 30.)));
+    let light = tp(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
 
-    tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red.clone())));
+    tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red)));
     tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 555., green)));
     tmp_world.add(tp(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone())));
     tmp_world.add(tp(Rectangle::new(
@@ -231,24 +317,36 @@ pub fn cornell_box_bvh(
         555.,
         white.clone(),
     )));
-    tmp_world.add(tp(Rectangle::new(0, 0., 555., 0., 555., 555., white)));
+    tmp_world.add(tp(Rectangle::new(
+        0,
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
 
-    // tmp_world.add(tp(Rectangle::new(
-    //     2,
-    //     213.,
-    //     343.,
-    //     227.,
-    //     332.,
-    //     554.,
-    //     light.clone(),
-    // )));
+    tmp_world.add(tp(Flip::new(tp(Rectangle::new(
+        2,
+        213.,
+        343.,
+        227.,
+        332.,
+        554.,
+        light.clone(),
+    )))));
 
-    let cube1 = Cube::new(Point3::new(0., 0., 0.), Point3::new(165., 330., 165.), red);
+    let cube1 = Cube::new(
+        Point3::new(0., 0., 0.),
+        Point3::new(165., 330., 165.),
+        white.clone(),
+    );
 
     let cube2 = Cube::new(
         Point3::new(0., 0., 0.),
         Point3::new(165., 165., 165.),
-        tp(Metal::new(RGBColor::new(0.8, 0.8, 0.9), 0.1)),
+        white,
     );
 
     let moved_cube1 = Translate {
@@ -261,44 +359,13 @@ pub fn cornell_box_bvh(
         offset: Vec3::new(130., 0., 65.),
     };
 
-    tmp_world.add(tp(ConstantMedium::new_from_color(
-        tp(moved_cube1),
-        0.01,
-        RGBColor::new(0., 0., 0.),
-    )));
-    // objects.add(tp(ConstantMedium::new_from_color(
-    //     tp(moved_cube2),
-    //     0.01,
-    //     RGBColor::new(1., 1., 1.),
-    // )));
-
+    tmp_world.add(tp(moved_cube1));
     tmp_world.add(tp(moved_cube2));
 
-    // lamp
-    for _i in 0..1000 {
-        let bulb = Sphere::new(Point3::rand_unit() * 70., rand_1(), light.clone());
-        let t_bulb = Translate {
-            item: tp(bulb),
-            offset: Vec3::new(277., 570., 277.),
-        };
-        tmp_world.add(tp(t_bulb));
-    }
-
-    // air
-    let boundary = Sphere::new(
-        Point3::new(277., 277., 277.),
-        500.,
-        tp(Lambertian::new_from_color(RGBColor::default())),
-    );
-    tmp_world.add(tp(ConstantMedium::new(
-        tp(boundary),
-        0.001,
-        tp(SolidColor::new_from_value(1., 1., 1.)),
-    )));
-
+    // world.add(tp(tmp_world));
     world.add(tp(BvhNode::new_from_list(&tmp_world, 0., 1.)));
 }
-
+/*
 pub fn book2_final_scene(
     world: &mut HittableList,
     background: &mut RGBColor,
@@ -413,83 +480,4 @@ pub fn book2_final_scene(
         Vec3::new(-100., 270., 395.),
     )));
 }
-
-pub fn cornell_box(
-    world: &mut HittableList,
-    background: &mut RGBColor,
-    look_from: &mut Point3,
-    look_at: &mut Point3,
-    vfov: &mut f64,
-) {
-    *world = HittableList::default();
-    *background = RGBColor::new(1., 1., 1.);
-    *look_from = Point3::new(278., 278., -800.);
-    *look_at = Point3::new(278., 278., 0.);
-    *vfov = 40.;
-
-    let red = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.65, 0.05, 0.05)),
-    });
-    let green = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.12, 0.45, 0.15)),
-    });
-    let white = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
-    });
-    let light = tp(DiffuseLight::new_from_color(RGBColor::new(20., 20., 20.)));
-
-    world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red.clone())));
-    world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 555., green)));
-    world.add(tp(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone())));
-    world.add(tp(Rectangle::new(
-        2,
-        0.,
-        555.,
-        0.,
-        555.,
-        555.,
-        white.clone(),
-    )));
-    world.add(tp(Rectangle::new(0, 0., 555., 0., 555., 555., white)));
-
-    // world.add(tp(Rectangle::new(
-    //     2,
-    //     213.,
-    //     343.,
-    //     227.,
-    //     332.,
-    //     554.,
-    //     light.clone(),
-    // )));
-
-    let cube1 = Cube::new(
-        Point3::new(0., 0., 0.),
-        Point3::new(165., 330., 165.),
-        red.clone(),
-    );
-
-    let cube2 = Cube::new(Point3::new(0., 0., 0.), Point3::new(165., 165., 165.), red);
-
-    let moved_cube1 = Translate {
-        item: tp(RotateY::new(tp(cube1), 15.)),
-        offset: Vec3::new(265., 0., 295.),
-    };
-
-    let moved_cube2 = Translate {
-        item: tp(RotateY::new(tp(cube2), -18.)),
-        offset: Vec3::new(130., 0., 65.),
-    };
-
-    world.add(tp(moved_cube1));
-    world.add(tp(moved_cube2));
-
-    // lamp
-    for _i in 0..500 {
-        let bulb = Sphere::new(Point3::rand_unit() * 70., rand_1(), light.clone());
-        let t_bulb = Translate {
-            item: tp(bulb),
-            offset: Vec3::new(277., 570., 277.),
-        };
-        world.add(tp(t_bulb));
-    }
-}
+*/

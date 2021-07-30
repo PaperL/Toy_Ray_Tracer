@@ -15,16 +15,16 @@ use crate::{
 };
 
 pub struct RotateY {
-    hit_ptr: Arc<dyn Hittable>,
+    item: Arc<dyn Hittable>,
     sin_theta: f64,
     cos_theta: f64,
-    aabb_box: Option<AABB>,
+    aabb_box: AABB,
 }
 
 impl RotateY {
-    pub fn new(hit_ptr: Arc<dyn Hittable>, angle: f64) -> Self {
+    pub fn new(item: Arc<dyn Hittable>, angle: f64) -> Self {
         let radians = degree_to_radian(angle);
-        let mut aabb_box = hit_ptr.bounding_box(0., 1.);
+        let mut aabb_box = item.bounding_box(0., 1.).unwrap();
         let sin_theta = f64::sin(radians);
         let cos_theta = f64::cos(radians);
 
@@ -34,28 +34,25 @@ impl RotateY {
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {
-                    let x = i as f64 * aabb_box.unwrap().max.x
-                        + (1 - i) as f64 * aabb_box.unwrap().min.x;
-                    let y = j as f64 * aabb_box.unwrap().max.y
-                        + (1 - j) as f64 * aabb_box.unwrap().min.y;
-                    let z = k as f64 * aabb_box.unwrap().max.z
-                        + (1 - k) as f64 * aabb_box.unwrap().min.z;
+                    let x = i as f64 * aabb_box.max.x + (1 - i) as f64 * aabb_box.min.x;
+                    let y = j as f64 * aabb_box.max.y + (1 - j) as f64 * aabb_box.min.y;
+                    let z = k as f64 * aabb_box.max.z + (1 - k) as f64 * aabb_box.min.z;
 
                     let new_x = cos_theta * x + sin_theta * z;
                     let new_z = -sin_theta * x + cos_theta * z;
 
                     let tester = Vec3::new(new_x, y, new_z);
-                    for c in 0..2 {
+                    for c in 0..3 {
                         min[c] = f64::min(min[c], tester[c]);
                         max[c] = f64::max(max[c], tester[c]);
                     }
                 }
             }
         }
-        aabb_box = Some(AABB::new(min, max));
+        aabb_box = AABB::new(min, max);
 
         Self {
-            hit_ptr,
+            item,
             sin_theta,
             cos_theta,
             aabb_box,
@@ -76,7 +73,7 @@ impl Hittable for RotateY {
 
         let rotated_ray = Ray::new(orig, dir, ray.tm);
 
-        if let Some(mut rec) = self.hit_ptr.hit(&rotated_ray, t_min, t_max) {
+        if let Some(mut rec) = self.item.hit(&rotated_ray, t_min, t_max) {
             let mut p = rec.p;
             let mut normal = rec.normal;
 
@@ -96,6 +93,6 @@ impl Hittable for RotateY {
     }
 
     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
-        self.aabb_box
+        Some(self.aabb_box)
     }
 }

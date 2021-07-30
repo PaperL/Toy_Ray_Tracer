@@ -1,4 +1,5 @@
 pub use rand::{prelude::ThreadRng, random, Rng};
+use std::f64::consts::PI;
 pub use std::{
     fmt::{Debug, Display},
     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
@@ -40,6 +41,9 @@ impl Vec3 {
     }
 
     pub fn to_unit(self) -> Self {
+        // if self.length().abs() < INFINITESIMAL {
+        //     panic!("Try to get 0 vector's unit.");
+        // }
         self / self.length()
     }
 
@@ -48,7 +52,7 @@ impl Vec3 {
     }
 
     pub fn length_squared(&self) -> f64 {
-        self.x * self.x + self.y * self.y + self.z * self.z
+        self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
     }
 
     pub fn rand_1() -> Self {
@@ -96,6 +100,19 @@ impl Vec3 {
         }
         .to_unit()
             * random::<f64>()
+    }
+
+    pub fn rand_cos_dir() -> Vec3 {
+        let mut rnd: ThreadRng = rand::thread_rng();
+        let r1 = rnd.gen::<f64>();
+        let r2 = rnd.gen::<f64>();
+        let z = (1. - r2).sqrt();
+
+        let phi = 2. * PI * r1;
+        let x = f64::cos(phi) * r2.sqrt();
+        let y = f64::sin(phi) * r2.sqrt();
+
+        Vec3::new(x, y, z)
     }
 
     pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
@@ -313,6 +330,30 @@ impl DivAssign<f64> for Vec3 {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let mut sum = Vec3::default();
+        for _i in 0..10000 {
+            sum += Vec3::rand_cos_dir();
+        }
+        println!("{}", sum / 10000.);
+    }
+
+    #[test]
+    fn test2() {
+        for _i in 0..100000 {
+            let k = Vec3::rand_cos_dir();
+            if k[0] == f64::NAN || k[1] == f64::NAN || k[2] == f64::NAN {
+                println!("1");
+            }
         }
     }
 }

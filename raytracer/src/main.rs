@@ -12,7 +12,7 @@ use std::{
     time::Instant,
 };
 
-use console::{style, Emoji};
+use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::{HumanDuration, MultiProgress, ProgressBar, ProgressStyle};
 use rand::Rng;
@@ -35,40 +35,83 @@ fn ray_color(ray: &Ray, item: Arc<dyn Hittable>, background: &RGBColor, depth: i
         return RGBColor::default();
     }
     if let Some(rec) = item.hit(ray, INFINITESIMAL, INFINITY) {
-        let emitted = rec.mat.emitted(rec.u, rec.v, rec.p);
-        if let Some((scattered, attenuation)) = rec.mat.scatter(ray, &rec) {
-            emitted + ray_color(&scattered, item, background, depth - 1) * attenuation
+        let emitted = rec.mat.emitted(ray, &rec, rec.u, rec.v, rec.p);
+
+        if let Some((albedo, _scattered, _pdf)) = rec.mat.scatter(ray, &rec) {
+            let mut rnd = rand::thread_rng();
+            let on_light = Point3::new(
+                rnd.gen_range(213.0..343.0),
+                554.,
+                rnd.gen_range(227.0..332.0),
+            );
+            let mut to_light = on_light - rec.p;
+            let dis_sqrd = to_light.length_squared();
+            to_light = to_light.to_unit();
+
+            if Vec3::dot(&to_light, &rec.normal) < 0. {
+                return emitted;
+            }
+
+            let light_area = (343. - 213.) * (332. - 227.);
+            let light_cos = to_light.y.abs();
+            if light_cos < INFINITESIMAL {
+                return emitted;
+            }
+
+            let pdf = dis_sqrd / (light_cos * light_area);
+            let scattered = Ray::new(rec.p, to_light, ray.tm);
+
+            return emitted
+                + albedo
+                    * rec.mat.scattering_pdf(&ray, &rec, &scattered)
+                    * ray_color(&scattered, item, background, depth - 1)
+                    / pdf;
         } else {
-            emitted
+            return emitted;
         }
     } else {
-        *background
+        return *background;
     }
 }
 
 //---------------------------------------------------------------------------------
 
-static INIT: Emoji<'_, '_> = Emoji("💿  ", "");
-static RUN: Emoji<'_, '_> = Emoji("🚀  ", "");
-static COLLECT: Emoji<'_, '_> = Emoji("🚛  ", "");
-static GENERATE: Emoji<'_, '_> = Emoji("🏭  ", "");
-static OUTPUT: Emoji<'_, '_> = Emoji("🥽 ", "");
-static FINISH: Emoji<'_, '_> = Emoji("🎉 ", "");
-static TIME: Emoji<'_, '_> = Emoji("⏱ ", "");
-
 fn main() {
-    println!("{} {}Initlizing...", style("[1/5]").bold().dim(), INIT);
+    print!("{}[2J", 27 as char); // clear screen
+    print!("{esc}[2J{esc}[1;1H", esc = 27 as char); // set cursor at 1,1
+    println!(
+        "\n         {}  {}\n",
+        style("PaperL's Toy Ray Tracer").cyan(),
+        style("v0.4.3").yellow(),
+    );
+    println!(
+        "{} 💿 {}",
+        style("[1/5]").bold().dim(),
+        style("Initlizing...").green()
+    );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 8;
+    const THREAD_NUMBER: usize = 7;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 1000;
+    const IMAGE_WIDTH: usize = 500;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
-    const SAMPLES_PER_PIXEL: u32 = 1000;
+    const SAMPLES_PER_PIXEL: u32 = 300;
     const MAX_DEPTH: i32 = 50;
+    println!(
+        "         Image size:              {}",
+        style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()
+    );
+    println!(
+        "         Sample number per pixel: {}",
+        style(SAMPLES_PER_PIXEL.to_string()).yellow()
+    );
+    println!(
+        "         Reflection max depth:    {}",
+        style(MAX_DEPTH.to_string()).yellow()
+    );
 
     // World
     let mut world = HittableList::default();
@@ -81,35 +124,35 @@ fn main() {
     let aperture = 0.;
     let focus_dist = 1.;
 
-    const SCENE_ID: i32 = 4;
+    const SCENE_ID: i32 = 3;
     match SCENE_ID {
-        0 => {
-            scene::random_scene(
-                &mut world,
-                &mut background,
-                &mut look_from,
-                &mut look_at,
-                &mut vfov,
-            );
-        }
-        1 => {
-            scene::simple_dark_scene(
-                &mut world,
-                &mut background,
-                &mut look_from,
-                &mut look_at,
-                &mut vfov,
-            );
-        }
-        2 => {
-            scene::cornell_box(
-                &mut world,
-                &mut background,
-                &mut look_from,
-                &mut look_at,
-                &mut vfov,
-            );
-        }
+        // 0 => {
+        //     scene::random_scene(
+        //         &mut world,
+        //         &mut background,
+        //         &mut look_from,
+        //         &mut look_at,
+        //         &mut vfov,
+        //     );
+        // }
+        // 1 => {
+        //     scene::simple_dark_scene(
+        //         &mut world,
+        //         &mut background,
+        //         &mut look_from,
+        //         &mut look_at,
+        //         &mut vfov,
+        //     );
+        // }
+        // 2 => {
+        //     scene::cornell_box(
+        //         &mut world,
+        //         &mut background,
+        //         &mut look_from,
+        //         &mut look_at,
+        //         &mut vfov,
+        //     );
+        // }
         3 => {
             scene::cornell_box_bvh(
                 &mut world,
@@ -119,15 +162,15 @@ fn main() {
                 &mut vfov,
             );
         }
-        4 => {
-            scene::book2_final_scene(
-                &mut world,
-                &mut background,
-                &mut look_from,
-                &mut look_at,
-                &mut vfov,
-            );
-        }
+        // 4 => {
+        //     scene::book2_final_scene(
+        //         &mut world,
+        //         &mut background,
+        //         &mut look_from,
+        //         &mut look_at,
+        //         &mut vfov,
+        //     );
+        // }
         _ => {
             panic!("Unexpected SCENE_ID in main()!");
         }
@@ -148,10 +191,11 @@ fn main() {
     //========================================================
 
     println!(
-        "{} {}Rendering with {} Threads...",
+        "{} 🚀 {} {} {}",
         style("[2/5]").bold().dim(),
-        RUN,
-        THREAD_NUMBER,
+        style("Rendering with").green(),
+        style(THREAD_NUMBER.to_string()).yellow(),
+        style("Threads...").green(),
     );
 
     const SECTION_LINE_NUM: usize = IMAGE_HEIGHT / THREAD_NUMBER;
@@ -160,6 +204,8 @@ fn main() {
     let mut thread_pool = Vec::<_>::new();
 
     let multiprogress = Arc::new(MultiProgress::new());
+    multiprogress.set_move_cursor(true); // turn on this to reduce flickering
+
     for thread_id in 0..THREAD_NUMBER {
         let line_beg = SECTION_LINE_NUM * thread_id;
         let mut line_end = line_beg + SECTION_LINE_NUM;
@@ -170,7 +216,9 @@ fn main() {
         let section_world = world.clone();
 
         let mp = multiprogress.clone();
-        let progress_bar = mp.add(ProgressBar::new((line_end - line_beg) as u64));
+        let progress_bar = mp.add(ProgressBar::new(
+            ((line_end - line_beg) * IMAGE_WIDTH) as u64,
+        ));
         progress_bar.set_style(ProgressStyle::default_bar()
         .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {finished_lines}/{total_lines} ({eta})")
         .progress_chars("#>-"));
@@ -179,6 +227,7 @@ fn main() {
 
         thread_pool.push((
             thread::spawn(move || {
+                let mut progress = 0;
                 progress_bar.set_position(0);
 
                 let channel_send = tx;
@@ -199,8 +248,10 @@ fn main() {
                                 ray_color(&ray, world_ptr.clone(), &background, MAX_DEPTH);
                         }
                         section_pixel_color.push(pixel_color);
+
+                        progress += 1;
+                        progress_bar.set_position(progress);
                     }
-                    progress_bar.set_position((y - line_beg) as u64);
                 }
                 channel_send.send(section_pixel_color).unwrap();
                 progress_bar.finish_with_message("Finished.");
@@ -214,9 +265,9 @@ fn main() {
     //========================================================
 
     println!(
-        "{} {}Collecting Threads Results...",
+        "{} 🚛 {}",
         style("[3/5]").bold().dim(),
-        COLLECT,
+        style("Collecting Threads Results...").green(),
     );
 
     let collecting_progress_bar = ProgressBar::new(THREAD_NUMBER as u64);
@@ -239,9 +290,9 @@ fn main() {
     //========================================================
 
     println!(
-        "{} {}Generating Image...",
+        "{} 🏭 {}",
         style("[4/5]").bold().dim(),
-        GENERATE,
+        style("Generating Image...").green()
     );
 
     let mut pixel_id = 0;
@@ -259,17 +310,20 @@ fn main() {
 
     //========================================================
 
-    println!("{} {}Outping Image...", style("[5/5]").bold().dim(), OUTPUT,);
+    println!(
+        "{} 🥽 {}",
+        style("[5/5]").bold().dim(),
+        style("Outping Image...").green()
+    );
 
     img.save("output/output.jpg").unwrap();
 
     //========================================================
 
     println!(
-        " {} {}\n {} Elapsed Time: {}",
-        FINISH,
+        "\n      🎉 {}\n      🕒 Elapsed Time: {}",
         style("All Work Done.").bold().green(),
-        TIME,
-        HumanDuration(begin_time.elapsed()),
+        style(HumanDuration(begin_time.elapsed())).yellow(),
     );
+    println!("\n");
 }

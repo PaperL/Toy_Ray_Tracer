@@ -15,16 +15,16 @@ impl AABB {
 
     pub fn hit(&self, ray: &Ray, mut t_min: f64, mut t_max: f64) -> bool {
         for i in 0..3 {
-            let k = 1. / ray.dir[i];
-            let mut t0 = (self.min[i] - ray.orig[i]) * k;
-            let mut t1 = (self.max[i] - ray.orig[i]) * k;
-            // if k < 0. {
-            if t0 > t1 {
+            let k = ray.dir[i];
+            let mut t0 = (self.min[i] - ray.orig[i]) / k;
+            let mut t1 = (self.max[i] - ray.orig[i]) / k;
+            if k < 0. {
                 swap(&mut t0, &mut t1);
             }
             t_min = max_f64(t_min, t0);
             t_max = min_f64(t_max, t1);
-            if t_max <= t_min {
+            if t_max < t_min {
+                // t_max <= t_min
                 return false;
             }
         }
