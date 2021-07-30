@@ -6,6 +6,8 @@ use crate::hittable::HitRecord;
 use crate::material::Material;
 use rand::random;
 
+use super::ScatterRecord;
+
 pub struct Dielectric {
     pub ir: f64, // Index of Refraction, 折射率
 }
@@ -23,7 +25,7 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
         let refraction_ratio = if rec.front_face {
             1. / self.ir
         } else {
@@ -43,6 +45,9 @@ impl Material for Dielectric {
             dir = Vec3::refract(&unit_dir, &rec.normal, refraction_ratio);
         }
 
-        Some((Ray::new(rec.p, dir, ray.tm), RGBColor::new(1., 1., 1.)))
+        Some(ScatterRecord::new_specular(
+            Ray::new(rec.p, dir, ray.tm),
+            RGBColor::new(1., 1., 1.),
+        ))
     }
 }

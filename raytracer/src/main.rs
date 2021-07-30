@@ -48,17 +48,21 @@ fn ray_color(
             .emitted(ray, &hit_rec, hit_rec.u, hit_rec.v, hit_rec.p);
 
         if let Some(sca_rec) = hit_rec.mat.scatter(ray, &hit_rec) {
-            let light_pdf = HittablePDF::new(hit_rec.p, light.clone());
-            let mixed_pdf = MixedPDF::new(tp(light_pdf), sca_rec.pdf.unwrap());
+            if let Some(specular_ray) = sca_rec.specular {
+                sca_rec.attenutaion * ray_color(&specular_ray, world, light, background, depth - 1)
+            } else {
+                let light_pdf = HittablePDF::new(hit_rec.p, light.clone());
+                let mixed_pdf = MixedPDF::new(tp(light_pdf), sca_rec.pdf.unwrap());
 
-            let scattered = Ray::new(hit_rec.p, mixed_pdf.generate(), ray.tm);
-            let pdf_val = mixed_pdf.value(&scattered.dir);
+                let scattered = Ray::new(hit_rec.p, mixed_pdf.generate(), ray.tm);
+                let pdf_val = mixed_pdf.value(&scattered.dir);
 
-            emitted
-                + sca_rec.attenutaion
-                    * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
-                    * ray_color(&scattered, world, light, background, depth - 1)
-                    / pdf_val
+                emitted
+                    + sca_rec.attenutaion
+                        * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
+                        * ray_color(&scattered, world, light, background, depth - 1)
+                        / pdf_val
+            }
         } else {
             emitted
         }

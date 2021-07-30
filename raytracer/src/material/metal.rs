@@ -8,6 +8,8 @@ use crate::{
     material::Material,
 };
 
+use super::ScatterRecord;
+
 pub struct Metal {
     pub albedo: RGBColor, // 反射率
     pub fuzz: f64,        // fuzziness, 模糊
@@ -23,18 +25,16 @@ impl Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, ray: &Ray, rec: &HitRecord) -> Option<ScatterRecord> {
         let reflected = Vec3::reflect(&ray.dir.to_unit(), &rec.normal);
-        let scattered = Ray::new(
-            rec.p,
-            reflected + Vec3::rand_unit_sphere() * self.fuzz,
-            ray.tm,
-        );
 
-        if Vec3::dot(&scattered.dir, &rec.normal) > 0. {
-            Some((scattered, self.albedo))
-        } else {
-            None
-        }
+        Some(ScatterRecord::new_specular(
+            Ray::new(
+                rec.p,
+                reflected + Vec3::rand_unit_sphere() * self.fuzz,
+                ray.tm,
+            ),
+            self.albedo,
+        ))
     }
 }

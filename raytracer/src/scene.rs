@@ -18,7 +18,7 @@ use crate::{
         // dielectric::Dielectric
         diffuse_light::DiffuseLight,
         lambertian::Lambertian,
-        //   metal::Metal,
+        metal::Metal,
     },
     texture::solid_color::SolidColor,
 };
@@ -39,6 +39,7 @@ pub fn cornell_box_bvh(
 
     let mut tmp_world = HittableList::default();
 
+    // Material
     let red = tp(Lambertian {
         albedo: tp(SolidColor::new_from_value(0.65, 0.05, 0.05)),
     });
@@ -49,7 +50,9 @@ pub fn cornell_box_bvh(
         albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
     });
     let light = tp(DiffuseLight::new_from_color(RGBColor::new(15., 15., 15.)));
+    let aluminum = tp(Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.));
 
+    // Wall
     tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red)));
     tmp_world.add(tp(Rectangle::new(1, 0., 555., 0., 555., 555., green)));
     tmp_world.add(tp(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone())));
@@ -72,6 +75,7 @@ pub fn cornell_box_bvh(
         white.clone(),
     )));
 
+    // Light
     tmp_world.add(tp(Flip::new(tp(Rectangle::new(
         2,
         213.,
@@ -82,10 +86,11 @@ pub fn cornell_box_bvh(
         light.clone(),
     )))));
 
+    // Cube
     let cube1 = Cube::new(
         Point3::new(0., 0., 0.),
         Point3::new(165., 330., 165.),
-        white.clone(),
+        aluminum,
     );
 
     let cube2 = Cube::new(

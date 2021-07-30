@@ -38,6 +38,9 @@
     - dielectric
     - diffuse_light
     - isotropic
+  - **pdf**
+    - cos_pdf
+    - hittable_pdf
   - **texture**
     - solid_color
     - checker_texture
@@ -49,8 +52,6 @@
 
 ![Output](output/preview.jpg)
 
-> 最终渲染图由本地 7 线程并行计算，渲染总耗时 40 分钟
->
 > 运行指令 `make run-release`
 >
 > 代码检查指令 `clippy --all-targets --all-features`
