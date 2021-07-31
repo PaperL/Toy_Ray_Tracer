@@ -8,6 +8,7 @@ pub mod texture;
 
 use std::{
     f64::INFINITY,
+    fs::File,
     sync::{mpsc, Arc},
     thread,
     time::Instant,
@@ -79,7 +80,7 @@ fn main() {
     println!(
         "\n         {}  {}\n",
         style("PaperL's Toy Ray Tracer").cyan(),
-        style("v0.4.5").yellow(),
+        style("v0.4.6").yellow(),
     );
     println!(
         "{} 💿 {}",
@@ -97,7 +98,7 @@ fn main() {
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
     const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
-    const IMAGE_FORMAT: &str = "jpg";
+    const JPEG_QUALITY: u8 = 90;
     println!(
         "         Image size:              {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()
@@ -289,9 +290,24 @@ fn main() {
         style("[5/5]").bold().dim(),
         style("Outping Image...").green()
     );
+    println!(
+        "         Image format:            {}",
+        style("JPEG").yellow()
+    );
+    println!(
+        "         JPEG image quality:      {}",
+        style(JPEG_QUALITY.to_string()).yellow()
+    );
 
-    img.save("output/output.".to_owned() + IMAGE_FORMAT)
-        .unwrap();
+    let output_image = image::DynamicImage::ImageRgb8(img);
+    let mut output_file = File::create("output/output.jpg").unwrap();
+    match output_image.write_to(
+        &mut output_file,
+        image::ImageOutputFormat::Jpeg(JPEG_QUALITY),
+    ) {
+        Ok(_) => {}
+        Err(_) => println!("         {}", style("Outputing file failed!").red()),
+    }
 
     //========================================================
 

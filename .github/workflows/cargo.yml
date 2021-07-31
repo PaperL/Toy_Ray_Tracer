@@ -67,7 +67,8 @@ jobs:
           # github.ref is tag when trigger is tag
           # or can use ${{ steps.get_version.outputs.VERSION }}
           body: |
-            Ray Tracing: The Rest of Your Life (Book3)
+            PaperL's Toy Ray Tracer
+            Rendering Result
           draft: false
           prerelease: false
       - name: Upload Release Asset 🚀

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     basic::{
         ray::Ray,
-        vec3::{Point3, RGBColor, Vec3},
+        vec3::{Point3, RGBColor},
     },
     hittable::HitRecord,
     texture::{solid_color::SolidColor, Texture},
@@ -28,11 +28,12 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn emitted(&self, _ray: &Ray, rec: &HitRecord, u: f64, v: f64, p: Point3) -> RGBColor {
-        if rec.front_face {
-            self.emit.value(u, v, p)
-        } else {
-            Vec3::default()
-        }
+    fn emitted(&self, _ray: &Ray, _rec: &HitRecord, u: f64, v: f64, p: Point3) -> RGBColor {
+        self.emit.value(u, v, p)
+        // if rec.front_face {
+        //     self.emit.value(u, v, p)
+        // } else {
+        //     Vec3::default()
+        // }
     }
 }
