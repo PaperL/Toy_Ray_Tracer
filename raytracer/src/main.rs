@@ -89,16 +89,16 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 8;
+    const THREAD_NUMBER: usize = 4;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 500;
+    const IMAGE_WIDTH: usize = 2000;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
-    const SAMPLES_PER_PIXEL: u32 = 1000;
+    const SAMPLES_PER_PIXEL: u32 = 2000;
     const MAX_DEPTH: i32 = 50;
-    const JPEG_QUALITY: u8 = 90;
+    const JPEG_QUALITY: u8 = 100;
     println!(
         "         Image size:              {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()

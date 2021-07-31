@@ -68,7 +68,8 @@ jobs:
           # or can use ${{ steps.get_version.outputs.VERSION }}
           body: |
             PaperL's Toy Ray Tracer
-            Rendering Result
+            Rendering Result & Source Code
+            实现教程内全部内容，以及部分额外功能的完整版本。
           draft: false
           prerelease: false
       - name: Upload Release Asset 🚀
@@ -79,6 +80,6 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: output/output.jpg
-          asset_name: output.png
+          asset_name: output.jpg
           asset_content_type: image/jpg
           # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
