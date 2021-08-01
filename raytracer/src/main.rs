@@ -53,21 +53,11 @@ fn ray_color(
                 sca_rec.attenutaion * ray_color(&specular_ray, world, lights, background, depth - 1)
             } else {
                 let light_pdf = HittablePDF::new(hit_rec.p, lights.clone());
-                let mixed_pdf = MixedPDF::new(tp(light_pdf), sca_rec.pdf.unwrap());
+                let mixed_pdf = MixedPDF::new(sca_rec.pdf.unwrap(), tp(light_pdf));
 
-                let mut scattered;
-                loop {
-                    scattered = Ray::new(hit_rec.p, mixed_pdf.generate(), ray.tm);
-                    if let Some(tmp_hit_rec) = world.hit(&scattered, INFINITESIMAL, INFINITY) {
-                        if (!tmp_hit_rec.p.is_nan()) && tmp_hit_rec.t > 10. {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
-                }
-
-                let pdf_val = mixed_pdf.value(&scattered.dir);
+                let pdf_dir = mixed_pdf.generate();
+                let pdf_val = mixed_pdf.value(&pdf_dir);
+                let scattered = Ray::new(hit_rec.p, pdf_dir, ray.tm);
 
                 emitted
                     + sca_rec.attenutaion
@@ -91,7 +81,7 @@ fn main() {
     println!(
         "\n         {}  {}\n",
         style("PaperL's Toy Ray Tracer").cyan(),
-        style("v0.4.6").yellow(),
+        style("v0.4.7").yellow(),
     );
     println!(
         "{} 💿 {}",
@@ -100,16 +90,16 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 7;
+    const THREAD_NUMBER: usize = 2;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 300;
+    const IMAGE_WIDTH: usize = 2000;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
-    const SAMPLES_PER_PIXEL: u32 = 100;
+    const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
-    const JPEG_QUALITY: u8 = 93;
+    const JPEG_QUALITY: u8 = 100;
     println!(
         "         Image size:              {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()

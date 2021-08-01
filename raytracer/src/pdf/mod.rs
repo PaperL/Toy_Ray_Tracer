@@ -14,25 +14,29 @@ pub trait PDF {
 //=================================================
 
 pub struct MixedPDF {
-    pdf: [Arc<dyn PDF>; 2],
+    scatter_pdf: Arc<dyn PDF>,
+    light_pdf: Arc<dyn PDF>,
 }
 
 impl MixedPDF {
-    pub fn new(pdf0: Arc<dyn PDF>, pdf1: Arc<dyn PDF>) -> Self {
-        Self { pdf: [pdf0, pdf1] }
+    pub fn new(scatter_pdf: Arc<dyn PDF>, light_pdf: Arc<dyn PDF>) -> Self {
+        Self {
+            scatter_pdf,
+            light_pdf,
+        }
     }
 }
 
 impl PDF for MixedPDF {
     fn value(&self, dir: &Vec3) -> f64 {
-        0.5 * self.pdf[0].value(dir) + 0.5 * self.pdf[1].value(dir)
+        0.7 * self.scatter_pdf.value(dir) + 0.3 * self.light_pdf.value(dir)
     }
 
     fn generate(&self) -> Vec3 {
-        if rand_1() < 0.5 {
-            self.pdf[0].generate()
+        if rand_1() < 0.65 {
+            self.scatter_pdf.generate()
         } else {
-            self.pdf[1].generate()
+            self.light_pdf.generate()
         }
     }
 }

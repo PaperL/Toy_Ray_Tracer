@@ -1,9 +1,9 @@
 pub mod instance;
 pub mod object;
 
-use std::sync::Arc;
+use std::{f64::consts::PI, sync::Arc};
 
-use rand::{Rng, prelude::SliceRandom};
+use rand::prelude::SliceRandom;
 
 use crate::{
     basic::{
@@ -28,6 +28,13 @@ pub trait Hittable: Send + Sync {
     fn rand_dir(&self, _orig: &Vec3) -> Vec3 {
         Vec3::new(1., 0., 0.)
     }
+
+    fn map_to(value: f64, width: f64, threshold: f64) -> f64
+    where
+        Self: Sized,
+    {
+        f64::atan(value / width) * threshold * 2. / PI
+    }
 }
 
 //=================================================
@@ -40,7 +47,7 @@ pub struct HitRecord {
     pub t: f64,                 // 碰撞点对应 Ray::at(t)
     pub front_face: bool,       // 光线是否来自外侧
     pub u: f64,                 // 碰撞点对应物体的 u,v, 用于计算贴图
-    pub v: f64,
+    pub v: f64,                 //
 }
 
 impl HitRecord {
@@ -138,12 +145,9 @@ impl Hittable for HittableList {
     }
 
     fn rand_dir(&self, orig: &Vec3) -> Vec3 {
-        let id = rand::thread_rng().gen_range(0..self.objects.len());
-
-        self.objects[id].rand_dir(orig)
-        // self.objects
-        //     .choose(&mut rand::thread_rng())
-        //     .unwrap()
-        //     .rand_dir(orig)
+        self.objects
+            .choose(&mut rand::thread_rng())
+            .unwrap()
+            .rand_dir(orig)
     }
 }

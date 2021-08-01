@@ -94,9 +94,9 @@ impl Hittable for Sphere {
             let cos_theta_max = (1. - self.r.powi(2) / (self.cen - *orig).length_squared()).sqrt();
             let solid_angle = 2. * PI * (1. - cos_theta_max);
 
-            1. / solid_angle
+            Self::map_to(1. / solid_angle, 20., 5.)
         } else {
-            0.
+            Self::map_to(1000., 20., 5.)
         }
     }
 

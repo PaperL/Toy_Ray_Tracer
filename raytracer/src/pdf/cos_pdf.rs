@@ -19,11 +19,7 @@ impl CosinePDF {
 impl PDF for CosinePDF {
     fn value(&self, dir: &Vec3) -> f64 {
         let cos = Vec3::dot(&dir.to_unit(), &self.uvw.w());
-        if cos < 0. {
-            0.
-        } else {
-            cos / PI
-        }
+        cos / PI
     }
 
     fn generate(&self) -> Vec3 {

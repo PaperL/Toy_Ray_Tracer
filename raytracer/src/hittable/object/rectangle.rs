@@ -71,7 +71,8 @@ impl Hittable for Rectangle {
         let k = self.coo[self.di[2]][0];
 
         let t = (k - ray.orig[self.di[2]]) / ray.dir[self.di[2]];
-        if t < t_min || t > t_max {
+        if t < t_min || t > t_max || t.is_nan() {
+            // ray.dir[di[2]] may be 0
             return None;
         }
 
@@ -129,9 +130,9 @@ impl Hittable for Rectangle {
             let dis_sqrd = rec.t.powi(2) * dir.length_squared();
             let cosine = (Vec3::dot(dir, &rec.normal) / dir.length()).abs();
 
-            dis_sqrd / (cosine * area)
+            Self::map_to(dis_sqrd / (cosine * area), 50., 5.)
         } else {
-            0.
+            Self::map_to(1000., 50., 5.)
         }
     }
 

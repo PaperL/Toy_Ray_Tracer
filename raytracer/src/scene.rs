@@ -23,7 +23,7 @@ use crate::{
 
 pub fn cornell_box_bvh(
     world: &mut HittableList,
-    lights: &mut HittableList,
+    light_glass: &mut HittableList,
     background: &mut RGBColor,
     look_from: &mut Point3,
     look_at: &mut Point3,
@@ -48,7 +48,7 @@ pub fn cornell_box_bvh(
         albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
     });
     let light = tp(DiffuseLight::new_from_color(
-        RGBColor::new(1., 1., 1.) * 15.,
+        RGBColor::new(255., 223., 184.) / 255. * 15., // 4700K
     ));
     let aluminum = tp(Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.));
     let glass = tp(Dielectric::new(1.5));
@@ -93,16 +93,14 @@ pub fn cornell_box_bvh(
     )));
 
     // Light
-    objects.add(tp(Rectangle::new(
-        2,
-        213.,
-        343.,
-        227.,
-        332.,
-        554.,
-        light.clone(),
-        false,
-    )));
+    let light_obj = tp(Rectangle::new(
+        2, 213., 343., 227., 332., 554., light, false,
+    ));
+    // let light_obj = tp(Rectangle::new(0, 213., 343., 500., 555., 1., light, true));
+    objects.add(light_obj.clone());
+    // objects.add(tp(Rectangle::new(
+    //     0, 213., 343., 500., 555., 0., white, false,
+    // )));
 
     // Cube
     let cube = Cube::new(
@@ -114,17 +112,14 @@ pub fn cornell_box_bvh(
         item: tp(RotateY::new(tp(cube), 15.)),
         offset: Vec3::new(265., 0., 295.),
     };
-    objects.add(tp(moved_cube.clone()));
+    objects.add(tp(moved_cube));
 
     let glass_ball = Sphere::new(Point3::new(190., 90., 190.), 90., glass);
     objects.add(tp(glass_ball.clone()));
 
-    // world.add(tp(objects));
     world.add(tp(BvhNode::new_from_list(&objects, 0., 1.)));
 
-    lights.add(tp(Rectangle::new(
-        2, 213., 343., 227., 332., 554., light, false,
-    )));
-    lights.add(tp(moved_cube));
-    lights.add(tp(glass_ball));
+    light_glass.add(light_obj);
+    light_glass.add(tp(glass_ball));
+    // light_glass.add(tp(moved_cube));
 }

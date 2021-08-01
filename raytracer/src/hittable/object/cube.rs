@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use rand::{prelude::SliceRandom, Rng};
+use rand::prelude::SliceRandom;
 
 use super::{
     super::{HitRecord, Hittable, HittableList},
@@ -97,29 +97,24 @@ impl Hittable for Cube {
     }
 
     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
-        Some(AABB::new(
-            self.cube_min, //- INFINITESIMAL,
-            self.cube_max, //+ INFINITESIMAL,
-        ))
+        Some(AABB::new(self.cube_min, self.cube_max))
     }
 
     fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
         let mut sum = 0.;
         for item in &self.sides.objects {
-            sum += item.pdf_value(orig, dir);
+            sum += 1. / item.pdf_value(orig, dir);
+            // Rectangle 的 pdf_value 为长方形在 orig 视野中的面积占比的倒数
         }
-
-        sum / 12.
+        // 长方体六个面的 pdf_value 倒数合为 长方体在 orig 视野中的面积的两倍的占比
+        2. / sum
     }
 
     fn rand_dir(&self, orig: &Point3) -> Vec3 {
-        let id = rand::thread_rng().gen_range(0..self.sides.objects.len());
-
-        self.sides.objects[id].rand_dir(orig)
-        // self.sides
-        //     .objects
-        //     .choose(&mut rand::thread_rng())
-        //     .unwrap()
-        //     .rand_dir(orig)
+        self.sides
+            .objects
+            .choose(&mut rand::thread_rng())
+            .unwrap()
+            .rand_dir(orig)
     }
 }
