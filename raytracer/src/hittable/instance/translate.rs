@@ -3,10 +3,14 @@ use std::sync::Arc;
 use super::super::{HitRecord, Hittable};
 
 use crate::{
-    basic::{ray::Ray, vec3::Vec3},
+    basic::{
+        ray::Ray,
+        vec3::{Point3, Vec3},
+    },
     bvh::aabb::AABB,
 };
 
+#[derive(Clone)]
 pub struct Translate {
     pub item: Arc<dyn Hittable>,
     pub offset: Vec3,
@@ -35,16 +39,16 @@ impl Hittable for Translate {
     }
 
     fn bounding_box(&self, tm: f64, dur: f64) -> Option<AABB> {
-        // if let Some(output_box) = self.item.bounding_box(tm, dur) {
-        //     Some(AABB::new(
-        //         output_box.min + self.offset,
-        //         output_box.max + self.offset,
-        //     ))
-        // } else {
-        //     None
-        // }
         self.item
             .bounding_box(tm, dur)
             .map(|output_box| AABB::new(output_box.min + self.offset, output_box.max + self.offset))
+    }
+
+    fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
+        self.item.pdf_value(&(*orig - self.offset), dir)
+    }
+
+    fn rand_dir(&self, orig: &Vec3) -> Vec3 {
+        self.item.rand_dir(&(*orig - self.offset))
     }
 }

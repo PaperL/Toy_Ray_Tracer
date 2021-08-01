@@ -1,12 +1,18 @@
 use std::sync::Arc;
 
+use rand::{prelude::SliceRandom, Rng};
+
 use super::{
     super::{HitRecord, Hittable, HittableList},
     rectangle::Rectangle,
 };
 
 use crate::{
-    basic::{ray::Ray, tp, vec3::Point3},
+    basic::{
+        ray::Ray,
+        tp,
+        vec3::{Point3, Vec3},
+    },
     bvh::aabb::AABB,
     material::Material,
 };
@@ -95,5 +101,25 @@ impl Hittable for Cube {
             self.cube_min, //- INFINITESIMAL,
             self.cube_max, //+ INFINITESIMAL,
         ))
+    }
+
+    fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
+        let mut sum = 0.;
+        for item in &self.sides.objects {
+            sum += item.pdf_value(orig, dir);
+        }
+
+        sum / 12.
+    }
+
+    fn rand_dir(&self, orig: &Point3) -> Vec3 {
+        let id = rand::thread_rng().gen_range(0..self.sides.objects.len());
+
+        self.sides.objects[id].rand_dir(orig)
+        // self.sides
+        //     .objects
+        //     .choose(&mut rand::thread_rng())
+        //     .unwrap()
+        //     .rand_dir(orig)
     }
 }

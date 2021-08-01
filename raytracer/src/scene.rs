@@ -114,7 +114,7 @@ pub fn cornell_box_bvh(
         item: tp(RotateY::new(tp(cube), 15.)),
         offset: Vec3::new(265., 0., 295.),
     };
-    objects.add(tp(moved_cube));
+    objects.add(tp(moved_cube.clone()));
 
     let glass_ball = Sphere::new(Point3::new(190., 90., 190.), 90., glass);
     objects.add(tp(glass_ball.clone()));
@@ -125,5 +125,6 @@ pub fn cornell_box_bvh(
     lights.add(tp(Rectangle::new(
         2, 213., 343., 227., 332., 554., light, false,
     )));
+    lights.add(tp(moved_cube));
     lights.add(tp(glass_ball));
 }

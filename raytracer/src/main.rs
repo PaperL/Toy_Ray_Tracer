@@ -55,7 +55,18 @@ fn ray_color(
                 let light_pdf = HittablePDF::new(hit_rec.p, lights.clone());
                 let mixed_pdf = MixedPDF::new(tp(light_pdf), sca_rec.pdf.unwrap());
 
-                let scattered = Ray::new(hit_rec.p, mixed_pdf.generate(), ray.tm);
+                let mut scattered;
+                loop {
+                    scattered = Ray::new(hit_rec.p, mixed_pdf.generate(), ray.tm);
+                    if let Some(tmp_hit_rec) = world.hit(&scattered, INFINITESIMAL, INFINITY) {
+                        if (!tmp_hit_rec.p.is_nan()) && tmp_hit_rec.t > 10. {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
                 let pdf_val = mixed_pdf.value(&scattered.dir);
 
                 emitted
@@ -89,16 +100,16 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 4;
+    const THREAD_NUMBER: usize = 7;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 2000;
+    const IMAGE_WIDTH: usize = 300;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
-    const SAMPLES_PER_PIXEL: u32 = 2000;
+    const SAMPLES_PER_PIXEL: u32 = 100;
     const MAX_DEPTH: i32 = 50;
-    const JPEG_QUALITY: u8 = 100;
+    const JPEG_QUALITY: u8 = 93;
     println!(
         "         Image size:              {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()

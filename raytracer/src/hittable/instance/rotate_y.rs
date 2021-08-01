@@ -14,6 +14,7 @@ use crate::{
     bvh::aabb::AABB,
 };
 
+#[derive(Clone)]
 pub struct RotateY {
     item: Arc<dyn Hittable>,
     sin_theta: f64,
@@ -58,18 +59,30 @@ impl RotateY {
             aabb_box,
         }
     }
+
+    pub fn rotated_orig(&self, orig: &Point3) -> Point3 {
+        let mut r_orig = *orig;
+
+        r_orig[0] = self.cos_theta * orig[0] - self.sin_theta * orig[2];
+        r_orig[2] = self.sin_theta * orig[0] + self.cos_theta * orig[2];
+
+        r_orig
+    }
+
+    pub fn rotated_dir(&self, dir: &Vec3) -> Vec3 {
+        let mut r_dir = *dir;
+
+        r_dir[0] = self.cos_theta * dir[0] - self.sin_theta * dir[2];
+        r_dir[2] = self.sin_theta * dir[0] + self.cos_theta * dir[2];
+
+        r_dir
+    }
 }
 
 impl Hittable for RotateY {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut orig = ray.orig;
-        let mut dir = ray.dir;
-
-        orig[0] = self.cos_theta * ray.orig[0] - self.sin_theta * ray.orig[2];
-        orig[2] = self.sin_theta * ray.orig[0] + self.cos_theta * ray.orig[2];
-
-        dir[0] = self.cos_theta * ray.dir[0] - self.sin_theta * ray.dir[2];
-        dir[2] = self.sin_theta * ray.dir[0] + self.cos_theta * ray.dir[2];
+        let orig = self.rotated_orig(&ray.orig);
+        let dir = self.rotated_dir(&ray.dir);
 
         let rotated_ray = Ray::new(orig, dir, ray.tm);
 
@@ -94,5 +107,18 @@ impl Hittable for RotateY {
 
     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
         Some(self.aabb_box)
+    }
+
+    fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
+        let item_orig = self.rotated_orig(orig);
+        let item_dir = self.rotated_dir(dir);
+
+        self.item.pdf_value(&item_orig, &item_dir)
+    }
+
+    fn rand_dir(&self, orig: &Vec3) -> Vec3 {
+        let item_orig = self.rotated_orig(orig);
+
+        self.item.rand_dir(&item_orig)
     }
 }

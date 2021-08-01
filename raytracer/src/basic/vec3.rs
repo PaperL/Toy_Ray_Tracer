@@ -40,6 +40,10 @@ impl Vec3 {
         self.x.abs() < INFINITESIMAL && self.y.abs() < INFINITESIMAL && self.z.abs() < INFINITESIMAL
     }
 
+    pub fn is_nan(&self) -> bool {
+        self.x.is_nan() || self.y.is_nan() || self.z.is_nan()
+    }
+
     pub fn to_unit(self) -> Self {
         // if self.length().abs() < INFINITESIMAL {
         //     panic!("Try to get 0 vector's unit.");

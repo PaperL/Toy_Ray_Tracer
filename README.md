@@ -2,9 +2,9 @@
 
 ## 简介
 
-- 上海交通大学，2020级ACM班，PaperL
+- 作者：上海交通大学，2020级ACM班，PaperL
 - 2020-2021学年暑期小学期，PPCA课程项目。[本项目题面](https://github.com/aik2mlj/raytracer-tutorial)，[原题面](https://github.com/skyzh/raytracer-tutorial)
-- 版本：v0.4.6
+- 版本：`v0.4.6`
 - 特别感谢
   - 感谢助教 [AIK2](https://github.com/aik2mlj), 助教 [XHRlyb](https://github.com/XHRlyb) 关于项目的耐心指导
   - 感谢 [Marcythm](https://github.com/Marcythm) 关于 Rust 语言的指导

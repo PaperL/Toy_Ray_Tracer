@@ -3,7 +3,7 @@ pub mod object;
 
 use std::sync::Arc;
 
-use rand::prelude::SliceRandom;
+use rand::{Rng, prelude::SliceRandom};
 
 use crate::{
     basic::{
@@ -138,9 +138,12 @@ impl Hittable for HittableList {
     }
 
     fn rand_dir(&self, orig: &Vec3) -> Vec3 {
-        self.objects
-            .choose(&mut rand::thread_rng())
-            .unwrap()
-            .rand_dir(orig)
+        let id = rand::thread_rng().gen_range(0..self.objects.len());
+
+        self.objects[id].rand_dir(orig)
+        // self.objects
+        //     .choose(&mut rand::thread_rng())
+        //     .unwrap()
+        //     .rand_dir(orig)
     }
 }
