@@ -8,7 +8,9 @@ pub mod texture;
 
 use std::{
     f64::INFINITY,
+    fmt::Display,
     fs::File,
+    process::exit,
     sync::{mpsc, Arc},
     thread,
     time::Instant,
@@ -81,7 +83,7 @@ fn main() {
     println!(
         "\n         {}  {}\n",
         style("PaperL's Toy Ray Tracer").cyan(),
-        style("v0.4.7").yellow(),
+        style(format!("v{}", env!("CARGO_PKG_VERSION"))).yellow(),
     );
     println!(
         "{} 💿 {}",
@@ -90,16 +92,16 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 2;
+    const THREAD_NUMBER: usize = 4;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 2000;
+    const IMAGE_WIDTH: usize = 300;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
     const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
-    const JPEG_QUALITY: u8 = 100;
+    const JPEG_QUALITY: u8 = 80;
     println!(
         "         Image size:              {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()
@@ -190,7 +192,7 @@ fn main() {
             ((line_end - line_beg) * IMAGE_WIDTH) as u64,
         ));
         progress_bar.set_style(ProgressStyle::default_bar()
-        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {finished_lines}/{total_lines} ({eta})")
+        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] [{pos}/{len}] ({eta})")
         .progress_chars("#>-"));
 
         let (tx, rx) = mpsc::channel();
@@ -246,9 +248,10 @@ fn main() {
         style("Collecting Threads Results...").green(),
     );
 
+    let mut thread_finish_successfully = true;
     let collecting_progress_bar = ProgressBar::new(THREAD_NUMBER as u64);
     // join 和 recv 均会阻塞主线程
-    for _thread_id in 0..THREAD_NUMBER {
+    for thread_id in 0..THREAD_NUMBER {
         let thread = thread_pool.remove(0);
         match thread.0.join() {
             Ok(_) => {
@@ -257,9 +260,18 @@ fn main() {
                 collecting_progress_bar.inc(1);
             }
             Err(_) => {
-                println!("{}", style("Joining the {}th thread failed!").bold().red());
+                thread_finish_successfully = false;
+                println!(
+                    "      ⚠️ {}{}{}",
+                    style("Joining the ").red(),
+                    style(thread_id.to_string()).yellow(),
+                    style("th thread failed!").red(),
+                );
             }
         }
+    }
+    if !thread_finish_successfully {
+        exit_with_error("Get run-time error!");
     }
     collecting_progress_bar.finish_and_clear();
 
@@ -307,7 +319,7 @@ fn main() {
         image::ImageOutputFormat::Jpeg(JPEG_QUALITY),
     ) {
         Ok(_) => {}
-        Err(_) => println!("         {}", style("Outputing file failed!").red()),
+        Err(_) => exit_with_error("Outputing file failed!"),
     }
 
     //========================================================
@@ -318,4 +330,18 @@ fn main() {
         style(HumanDuration(begin_time.elapsed())).yellow(),
     );
     println!("\n");
+
+    exit(0);
+}
+
+fn exit_with_error<T>(info: T)
+where
+    T: Display,
+{
+    println!(
+        "\n\n      {}{}\n\n",
+        style("❌ Error: ").bold().red().on_yellow(),
+        style(info).black().on_yellow()
+    );
+    exit(1);
 }

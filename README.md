@@ -3,7 +3,7 @@
 ## 简介
 
 - 作者：上海交通大学，2020级ACM班，PaperL
-- 版本：`v0.4.7`
+- 版本：`v0.4.8`
 - 说明：2020-2021学年暑期小学期，PPCA课程项目。[本项目题面](https://github.com/aik2mlj/raytracer-tutorial)，[原题面](https://github.com/skyzh/raytracer-tutorial)
 
 - 特别感谢：
@@ -19,7 +19,7 @@
 
 > 图为封闭的康奈尔盒子
 >
-> 运行指令 `make run-release`
+> 编译运行指令 `make run-release`
 
 
 
@@ -92,3 +92,26 @@
 4. 提高了关于 GitHub 的熟悉程度
    - GitAction 及 tag 的使用
    - 及时 Commit 稳定代码来帮助快速定位 Bug 或回滚
+
+
+
+
+
+## Commit Checklist
+
+- **New Release?** 
+  - [ ] Yes
+  - [x] No
+
+- **源代码**
+  - [x] `Cargo fmt`
+  - [x] `Cargo Clippy`
+  - [ ] 渲染参数*（线程数，分辨率，采样率，图像质量）*
+- **文件**
+  - [x] `output` 文件夹
+- **其他**
+  - [x] `README.md` 版本号
+  - [x] Rust 项目版本号
+  - [ ] GitHub Action - Workflow - Release Body
+
+
