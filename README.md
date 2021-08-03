@@ -3,7 +3,7 @@
 ## 简介
 
 - 作者：上海交通大学，2020级ACM班，PaperL
-- 版本：`v0.5.0`
+- 版本：`v0.5.1`
 - 说明：2020-2021学年暑期小学期，PPCA课程项目。[本项目题面](https://github.com/aik2mlj/raytracer-tutorial)，[原题面](https://github.com/skyzh/raytracer-tutorial)
 
 - 特别感谢：
@@ -36,7 +36,7 @@
 - 改进算法
 
   - [x] 合并三个方向的 `Rectangle` 类
-  - [x] 实现单向透光的 `Rectangle` 类
+  - [x] 实现单向透光的 `OneWayRectangle` 类
   - [x] 实现 `Transform` 类的 PDF 功能
   - [x] 修正教程中 PDF 相关公式错误，实现更合理的混合多种 PDF 的方式
   - [x] 使用泛型避免不定长的 `dyn` 类型相对于定长类型的额外开销
@@ -100,18 +100,18 @@
 ## Commit Checklist
 
 - **New Release?** 
-  - [ ] Yes
-  - [x] No
+  - [x] Yes
+  - [ ] No
 
 - **源代码**
   - [x] `Cargo fmt`
   - [x] `Cargo Clippy`
-  - [ ] 渲染参数*（线程数，分辨率，采样率，图像质量）*
+  - [x] 渲染参数*（线程数，分辨率，采样率，图像质量）*
 - **文件**
   - [x] `output` 文件夹
 - **其他**
   - [x] `README.md` 版本号
   - [x] Rust 项目版本号
-  - [ ] GitHub Action - Workflow - Release Body
+  - [x] GitHub Action - Workflow - Release Body
 
 

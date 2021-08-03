@@ -19,6 +19,7 @@ pub struct Camera {
 }
 
 impl Camera {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         fr: Point3,        // look from
         to: Point3,        // look to

@@ -45,6 +45,7 @@ impl BvhNode {
         Self::new_from_vec(hittable_list.objects, tm, dur)
     }
 
+    #[allow(clippy::borrowed_box)]
     pub fn new_from_vec(mut objects: Vec<Box<dyn Hittable>>, tm: f64, dur: f64) -> Self {
         let mut rnd = rand::thread_rng();
         let axis = rnd.gen_range(0..3);

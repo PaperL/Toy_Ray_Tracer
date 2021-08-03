@@ -41,7 +41,6 @@ impl<TM: Material + Clone> Cube<TM> {
             max.y,
             min.z,
             mat.clone(),
-            false,
         ));
         tmp_cube.sides.push(Rectangle::new(
             0,
@@ -51,7 +50,6 @@ impl<TM: Material + Clone> Cube<TM> {
             max.y,
             max.z,
             mat.clone(),
-            true,
         ));
         tmp_cube.sides.push(Rectangle::new(
             1,
@@ -61,7 +59,6 @@ impl<TM: Material + Clone> Cube<TM> {
             max.z,
             min.x,
             mat.clone(),
-            false,
         ));
         tmp_cube.sides.push(Rectangle::new(
             1,
@@ -71,7 +68,6 @@ impl<TM: Material + Clone> Cube<TM> {
             max.z,
             max.x,
             mat.clone(),
-            true,
         ));
         tmp_cube.sides.push(Rectangle::new(
             2,
@@ -81,11 +77,10 @@ impl<TM: Material + Clone> Cube<TM> {
             max.z,
             min.y,
             mat.clone(),
-            false,
         ));
-        tmp_cube.sides.push(Rectangle::new(
-            2, min.x, max.x, min.z, max.z, max.y, mat, true,
-        ));
+        tmp_cube
+            .sides
+            .push(Rectangle::new(2, min.x, max.x, min.z, max.z, max.y, mat));
 
         tmp_cube
     }

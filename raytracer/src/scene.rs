@@ -4,10 +4,9 @@ use crate::{
     hittable::{
         instance::{rotate_y::RotateY, translate::Translate},
         object::{
-            // constant_medium::ConstantMedium,
+            constant_medium::ConstantMedium,
             cube::Cube,
-            //   moving_sphere::MovingSphere,
-            rectangle::Rectangle,
+            rectangle::{OneWayRectangle, Rectangle},
             sphere::Sphere,
         },
         HittableList,
@@ -31,29 +30,11 @@ pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
     let glass = Dielectric::new(1.5);
 
     // Wall
-    objects.add(Rectangle::new(1, 0., 555., 0., 555., 0., red, true));
-    objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green, false));
-    objects.add(Rectangle::new(
-        2,
-        0.,
-        555.,
-        0.,
-        555.,
-        0.,
-        white.clone(),
-        true,
-    ));
-    objects.add(Rectangle::new(
-        2,
-        0.,
-        555.,
-        0.,
-        555.,
-        555.,
-        white.clone(),
-        false,
-    ));
-    objects.add(Rectangle::new(
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 0., red));
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 0., white.clone()));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 555., white.clone()));
+    objects.add(OneWayRectangle::new(
         0,
         0.,
         555.,
@@ -63,10 +44,10 @@ pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
         white.clone(),
         true,
     ));
-    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white, false));
+    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white));
 
     // Light
-    let light_obj = Rectangle::new(2, 213., 343., 227., 332., 554., light, false);
+    let light_obj = OneWayRectangle::new(2, 213., 343., 227., 332., 554., light, false);
     objects.add(light_obj.clone());
 
     // Cube
@@ -75,10 +56,9 @@ pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
         Point3::new(165., 330., 165.),
         aluminum,
     );
-    // objects.add(cube);
     let moved_cube = Translate::new(RotateY::new(cube, 15.), Vec3::new(265., 0., 295.));
-    // let moved_cube = Translate::new(cube, Vec3::new(265., 0., 295.));
-    objects.add(moved_cube.clone());
+    let cm = ConstantMedium::new_from_color(moved_cube, 0.01, RGBColor::new(0.0, 0.0, 0.4));
+    objects.add(cm);
 
     let glass_ball = Sphere::new(Point3::new(190., 90., 190.), 90., glass);
     objects.add(glass_ball.clone());
@@ -88,5 +68,5 @@ pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
 
     lights.add(light_obj);
     lights.add(glass_ball);
-    lights.add(moved_cube);
+    // lights.add(moved_cube);
 }

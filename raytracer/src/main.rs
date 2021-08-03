@@ -96,16 +96,16 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 6;
+    const THREAD_NUMBER: usize = 2;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 300;
+    const IMAGE_WIDTH: usize = 2000;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
     const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
-    const JPEG_QUALITY: u8 = 80;
+    const JPEG_QUALITY: u8 = 100;
     println!(
         "         Image size:              {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()
@@ -131,20 +131,6 @@ fn main() {
     let vfov = 40.;
     let aperture = 0.;
     let focus_dist = 1.;
-
-    // Scene
-    // const SCENE_ID: i32 = 0;
-    // match SCENE_ID {
-    //     0 => {
-    //         scene::cornell_box_bvh(
-    //             &mut world,
-    //             &mut lights,
-    //         );
-    //     }
-    //     _ => {
-    //         panic!("Unexpected SCENE_ID in main()!");
-    //     }
-    // }
 
     // Camera
     let cam = Camera::new(
@@ -184,6 +170,7 @@ fn main() {
             line_end = IMAGE_HEIGHT;
         }
 
+        // Secene
         let mut section_world = HittableList::default();
         let mut section_lights = HittableList::default();
         cornell_box_bvh(&mut section_world, &mut section_lights);
