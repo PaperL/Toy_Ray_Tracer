@@ -4,15 +4,13 @@ pub mod diffuse_light;
 pub mod lambertian;
 pub mod metal;
 
-use std::sync::Arc;
-
 use crate::{
     basic::{
         ray::Ray,
         vec3::{Point3, RGBColor},
     },
     hittable::HitRecord,
-    pdf::PDF,
+    pdf::cos_pdf::CosinePDF,
 };
 
 pub trait Material: Send + Sync {
@@ -29,26 +27,29 @@ pub trait Material: Send + Sync {
     }
 }
 
+//=================================================
+
 pub struct ScatterRecord {
-    // 如果是镜面反射 (Specular), 则没有 PDF
-    pub specular: Option<Ray>,
-    pub pdf: Option<Arc<dyn PDF>>,
+    pub dat: ScaRecData,
     pub attenutaion: RGBColor,
 }
 
+pub enum ScaRecData {
+    Specular(Ray),
+    Pdf(CosinePDF),
+}
+
 impl ScatterRecord {
-    pub fn new_specular(specular: Ray, attenutaion: RGBColor) -> Self {
+    pub fn new_specular(ray: Ray, attenutaion: RGBColor) -> Self {
         Self {
-            specular: Some(specular),
-            pdf: None,
+            dat: ScaRecData::Specular(ray),
             attenutaion,
         }
     }
 
-    pub fn new_not_specular(pdf: Arc<dyn PDF>, attenutaion: RGBColor) -> Self {
+    pub fn new_not_specular(pdf: CosinePDF, attenutaion: RGBColor) -> Self {
         Self {
-            specular: None,
-            pdf: Some(pdf),
+            dat: ScaRecData::Pdf(pdf),
             attenutaion,
         }
     }

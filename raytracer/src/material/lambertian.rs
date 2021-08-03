@@ -1,9 +1,8 @@
-use std::{f64::consts::PI, sync::Arc};
+use std::f64::consts::PI;
 
 use crate::{
     basic::{
         ray::Ray,
-        tp,
         vec3::{RGBColor, Vec3},
     },
     hittable::HitRecord,
@@ -14,26 +13,32 @@ use crate::{
 
 use super::ScatterRecord;
 
-pub struct Lambertian {
-    pub albedo: Arc<dyn Texture>,
+#[derive(Clone)]
+pub struct Lambertian<TT>
+where
+    TT: Texture,
+{
+    pub albedo: TT,
 }
 
-impl Lambertian {
-    pub fn new(albedo: Arc<dyn Texture>) -> Self {
+impl<TT: Texture> Lambertian<TT> {
+    pub fn new(albedo: TT) -> Self {
         Self { albedo }
     }
+}
 
+impl Lambertian<SolidColor> {
     pub fn new_from_color(color_value: RGBColor) -> Self {
         Self {
-            albedo: Arc::new(SolidColor::new(color_value)),
+            albedo: SolidColor::new(color_value),
         }
     }
 }
 
-impl Material for Lambertian {
+impl<TT: Texture> Material for Lambertian<TT> {
     fn scatter(&self, _ray: &Ray, hit_rec: &HitRecord) -> Option<ScatterRecord> {
         Some(ScatterRecord::new_not_specular(
-            tp(CosinePDF::new(hit_rec.normal)),
+            CosinePDF::new(hit_rec.normal),
             self.albedo.value(hit_rec.u, hit_rec.v, hit_rec.p),
         ))
     }

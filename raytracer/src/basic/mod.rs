@@ -60,7 +60,7 @@ pub fn clamp_hoi(x: f64, min: f64, max: f64) -> f64 {
     x
 }
 
-pub fn tp<T>(arg: T) -> Arc<T> {
+pub fn into_arc<T>(arg: T) -> Arc<T> {
     // turn argument into Arc pointer
     Arc::new(arg)
 }

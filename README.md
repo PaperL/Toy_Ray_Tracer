@@ -3,7 +3,7 @@
 ## 简介
 
 - 作者：上海交通大学，2020级ACM班，PaperL
-- 版本：`v0.4.8`
+- 版本：`v0.5.0`
 - 说明：2020-2021学年暑期小学期，PPCA课程项目。[本项目题面](https://github.com/aik2mlj/raytracer-tutorial)，[原题面](https://github.com/skyzh/raytracer-tutorial)
 
 - 特别感谢：
@@ -39,7 +39,7 @@
   - [x] 实现单向透光的 `Rectangle` 类
   - [x] 实现 `Transform` 类的 PDF 功能
   - [x] 修正教程中 PDF 相关公式错误，实现更合理的混合多种 PDF 的方式
-  - [ ] 使用泛型避免不定长的 `dyn` 类型相对于定长类型的额外开销
+  - [x] 使用泛型避免不定长的 `dyn` 类型相对于定长类型的额外开销
   - [ ] 实现 `Triangle` 类
   - [ ] 使用过程宏生成静态 BVH 数据，提高渲染效率
 

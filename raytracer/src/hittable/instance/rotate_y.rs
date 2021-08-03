@@ -1,7 +1,4 @@
-use std::{
-    f64::{INFINITY, NEG_INFINITY},
-    sync::Arc,
-};
+use std::f64::{INFINITY, NEG_INFINITY};
 
 use super::super::{HitRecord, Hittable};
 
@@ -15,17 +12,20 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct RotateY {
-    item: Arc<dyn Hittable>,
+pub struct RotateY<TH>
+where
+    TH: Hittable,
+{
+    obj: TH,
     sin_theta: f64,
     cos_theta: f64,
     aabb_box: AABB,
 }
 
-impl RotateY {
-    pub fn new(item: Arc<dyn Hittable>, angle: f64) -> Self {
+impl<TH: Hittable> RotateY<TH> {
+    pub fn new(obj: TH, angle: f64) -> Self {
         let radians = degree_to_radian(angle);
-        let mut aabb_box = item.bounding_box(0., 1.).unwrap();
+        let tmp_box = obj.bounding_box(0., 1.).unwrap();
         let sin_theta = f64::sin(radians);
         let cos_theta = f64::cos(radians);
 
@@ -35,9 +35,9 @@ impl RotateY {
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {
-                    let x = i as f64 * aabb_box.max.x + (1 - i) as f64 * aabb_box.min.x;
-                    let y = j as f64 * aabb_box.max.y + (1 - j) as f64 * aabb_box.min.y;
-                    let z = k as f64 * aabb_box.max.z + (1 - k) as f64 * aabb_box.min.z;
+                    let x = i as f64 * tmp_box.max.x + (1 - i) as f64 * tmp_box.min.x;
+                    let y = j as f64 * tmp_box.max.y + (1 - j) as f64 * tmp_box.min.y;
+                    let z = k as f64 * tmp_box.max.z + (1 - k) as f64 * tmp_box.min.z;
 
                     let new_x = cos_theta * x + sin_theta * z;
                     let new_z = -sin_theta * x + cos_theta * z;
@@ -50,10 +50,10 @@ impl RotateY {
                 }
             }
         }
-        aabb_box = AABB::new(min, max);
+        let aabb_box = AABB::new(min, max);
 
         Self {
-            item,
+            obj,
             sin_theta,
             cos_theta,
             aabb_box,
@@ -79,14 +79,14 @@ impl RotateY {
     }
 }
 
-impl Hittable for RotateY {
+impl<TH: Hittable> Hittable for RotateY<TH> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let orig = self.rotated_orig(&ray.orig);
         let dir = self.rotated_dir(&ray.dir);
 
         let rotated_ray = Ray::new(orig, dir, ray.tm);
 
-        if let Some(mut rec) = self.item.hit(&rotated_ray, t_min, t_max) {
+        if let Some(mut rec) = self.obj.hit(&rotated_ray, t_min, t_max) {
             let mut p = rec.p;
             let mut normal = rec.normal;
 
@@ -110,15 +110,15 @@ impl Hittable for RotateY {
     }
 
     fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
-        let item_orig = self.rotated_orig(orig);
-        let item_dir = self.rotated_dir(dir);
+        let obj_orig = self.rotated_orig(orig);
+        let obj_dir = self.rotated_dir(dir);
 
-        self.item.pdf_value(&item_orig, &item_dir)
+        self.obj.pdf_value(&obj_orig, &obj_dir)
     }
 
     fn rand_dir(&self, orig: &Vec3) -> Vec3 {
-        let item_orig = self.rotated_orig(orig);
+        let obj_orig = self.rotated_orig(orig);
 
-        self.item.rand_dir(&item_orig)
+        self.obj.rand_dir(&obj_orig)
     }
 }

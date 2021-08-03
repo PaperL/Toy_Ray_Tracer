@@ -2,6 +2,7 @@ use crate::basic::vec3::{Point3, RGBColor};
 
 use super::Texture;
 
+#[derive(Clone)]
 pub struct SolidColor {
     pub color_value: RGBColor,
 }

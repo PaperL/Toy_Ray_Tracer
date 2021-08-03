@@ -1,7 +1,4 @@
-use std::{
-    f64::{consts::PI, INFINITY},
-    sync::Arc,
-};
+use std::f64::{consts::PI, INFINITY};
 
 use super::super::{HitRecord, Hittable};
 
@@ -18,14 +15,17 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct Sphere {
-    pub cen: Point3,            // center
-    pub r: f64,                 // radius
-    pub mat: Arc<dyn Material>, // material
+pub struct Sphere<TM>
+where
+    TM: Material,
+{
+    pub cen: Point3, // center
+    pub r: f64,      // radius
+    pub mat: TM,     // material
 }
 
-impl Sphere {
-    pub fn new(cen: Point3, r: f64, mat: Arc<dyn Material>) -> Self {
+impl<TM: Material> Sphere<TM> {
+    pub fn new(cen: Point3, r: f64, mat: TM) -> Self {
         Self { cen, r, mat }
     }
 
@@ -43,7 +43,7 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl<TM: Material> Hittable for Sphere<TM> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.orig - self.cen;
         let a = ray.dir.length_squared();
@@ -67,7 +67,7 @@ impl Hittable for Sphere {
         let mut rec = HitRecord {
             p: ray.at(root),
             normal: Vec3::default(),
-            mat: self.mat.clone(),
+            mat: &self.mat,
             t: root,
             front_face: bool::default(),
             u: 0.,

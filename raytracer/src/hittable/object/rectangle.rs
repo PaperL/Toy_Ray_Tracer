@@ -1,4 +1,4 @@
-use std::{f64::INFINITY, sync::Arc};
+use std::f64::INFINITY;
 
 use rand::Rng;
 
@@ -15,15 +15,18 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct Rectangle {
+pub struct Rectangle<TM>
+where
+    TM: Material,
+{
     pub dir: u32,
     pub coo: [[f64; 2]; 3],
-    pub mat: Arc<dyn Material>,
+    pub mat: TM,
     di: [usize; 3], // dimension index
     face_coo_pos: bool,
 }
 
-impl Rectangle {
+impl<TM: Material> Rectangle<TM> {
     pub fn new(
         dir: u32,
         a1: f64,
@@ -31,7 +34,7 @@ impl Rectangle {
         a3: f64,
         a4: f64,
         k: f64,
-        mat: Arc<dyn Material>,
+        mat: TM,
         face_coo_pos: bool,
     ) -> Self {
         let mut tr = Rectangle {
@@ -62,7 +65,7 @@ impl Rectangle {
     }
 }
 
-impl Hittable for Rectangle {
+impl<TM: Material> Hittable for Rectangle<TM> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let a1 = self.coo[self.di[0]][0];
         let a2 = self.coo[self.di[0]][1];
@@ -96,7 +99,7 @@ impl Hittable for Rectangle {
                 t,
                 ray,
                 &outward_normal,
-                self.mat.clone(),
+                &self.mat,
             ))
         } else {
             None
@@ -104,7 +107,7 @@ impl Hittable for Rectangle {
     }
 
     fn bounding_box(&self, _tm: f64, _dur: f64) -> Option<AABB> {
-        let thickness = 10. * INFINITESIMAL;
+        let thickness = 0.1;
         Some(AABB {
             min: Point3::new(
                 self.coo[0][0] + (if self.di[2] == 0 { -thickness } else { 0. }),

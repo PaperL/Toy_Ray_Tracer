@@ -10,6 +10,7 @@ use crate::{
 
 use super::ScatterRecord;
 
+#[derive(Clone)]
 pub struct Metal {
     pub albedo: RGBColor, // 反射率
     pub fuzz: f64,        // fuzziness, 模糊

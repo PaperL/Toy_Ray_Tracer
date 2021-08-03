@@ -7,6 +7,7 @@ use crate::basic::{
 
 use super::Texture;
 
+#[derive(Clone)]
 pub struct ImageTexture {
     pub image: RgbImage, // ImageBuffer<Rgb<u8>, Vec<u8>>
 }

@@ -1,8 +1,5 @@
 use crate::{
-    basic::{
-        tp,
-        vec3::{Point3, RGBColor, Vec3},
-    },
+    basic::vec3::{Point3, RGBColor, Vec3},
     bvh::bvh_node::BvhNode,
     hittable::{
         instance::{rotate_y::RotateY, translate::Translate},
@@ -21,44 +18,22 @@ use crate::{
     texture::solid_color::SolidColor,
 };
 
-pub fn cornell_box_bvh(
-    world: &mut HittableList,
-    light_glass: &mut HittableList,
-    background: &mut RGBColor,
-    look_from: &mut Point3,
-    look_at: &mut Point3,
-    vfov: &mut f64,
-) {
-    *world = HittableList::default();
-    *background = RGBColor::new(0., 0., 0.);
-    *look_from = Point3::new(278., 278., -800.);
-    *look_at = Point3::new(278., 278., 0.);
-    *vfov = 40.;
-
+pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
     let mut objects = HittableList::default();
 
     // Material
-    let red = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.65, 0.05, 0.05)),
-    });
-    let green = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.12, 0.45, 0.15)),
-    });
-    let white = tp(Lambertian {
-        albedo: tp(SolidColor::new_from_value(0.73, 0.73, 0.73)),
-    });
-    let light = tp(DiffuseLight::new_from_color(
-        RGBColor::new(255., 223., 184.) / 255. * 15., // 4700K
-    ));
-    let aluminum = tp(Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.));
-    let glass = tp(Dielectric::new(1.5));
+    let red = Lambertian::new(SolidColor::new_from_value(0.65, 0.05, 0.05));
+    let green = Lambertian::new(SolidColor::new_from_value(0.12, 0.45, 0.15));
+    let white = Lambertian::new(SolidColor::new_from_value(0.73, 0.73, 0.73));
+    // 4700K
+    let light = DiffuseLight::new_from_color(RGBColor::new(255., 223., 184.) / 255. * 20.);
+    let aluminum = Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.);
+    let glass = Dielectric::new(1.5);
 
     // Wall
-    objects.add(tp(Rectangle::new(1, 0., 555., 0., 555., 0., red, true)));
-    objects.add(tp(Rectangle::new(
-        1, 0., 555., 0., 555., 555., green, false,
-    )));
-    objects.add(tp(Rectangle::new(
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 0., red, true));
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green, false));
+    objects.add(Rectangle::new(
         2,
         0.,
         555.,
@@ -67,8 +42,8 @@ pub fn cornell_box_bvh(
         0.,
         white.clone(),
         true,
-    )));
-    objects.add(tp(Rectangle::new(
+    ));
+    objects.add(Rectangle::new(
         2,
         0.,
         555.,
@@ -77,8 +52,8 @@ pub fn cornell_box_bvh(
         555.,
         white.clone(),
         false,
-    )));
-    objects.add(tp(Rectangle::new(
+    ));
+    objects.add(Rectangle::new(
         0,
         0.,
         555.,
@@ -87,20 +62,12 @@ pub fn cornell_box_bvh(
         0.,
         white.clone(),
         true,
-    )));
-    objects.add(tp(Rectangle::new(
-        0, 0., 555., 0., 555., 555., white, false,
-    )));
+    ));
+    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white, false));
 
     // Light
-    let light_obj = tp(Rectangle::new(
-        2, 213., 343., 227., 332., 554., light, false,
-    ));
-    // let light_obj = tp(Rectangle::new(0, 213., 343., 500., 555., 1., light, true));
+    let light_obj = Rectangle::new(2, 213., 343., 227., 332., 554., light, false);
     objects.add(light_obj.clone());
-    // objects.add(tp(Rectangle::new(
-    //     0, 213., 343., 500., 555., 0., white, false,
-    // )));
 
     // Cube
     let cube = Cube::new(
@@ -108,18 +75,18 @@ pub fn cornell_box_bvh(
         Point3::new(165., 330., 165.),
         aluminum,
     );
-    let moved_cube = Translate {
-        item: tp(RotateY::new(tp(cube), 15.)),
-        offset: Vec3::new(265., 0., 295.),
-    };
-    objects.add(tp(moved_cube));
+    // objects.add(cube);
+    let moved_cube = Translate::new(RotateY::new(cube, 15.), Vec3::new(265., 0., 295.));
+    // let moved_cube = Translate::new(cube, Vec3::new(265., 0., 295.));
+    objects.add(moved_cube.clone());
 
     let glass_ball = Sphere::new(Point3::new(190., 90., 190.), 90., glass);
-    objects.add(tp(glass_ball.clone()));
+    objects.add(glass_ball.clone());
 
-    world.add(tp(BvhNode::new_from_list(&objects, 0., 1.)));
+    // *world = objects;
+    world.add(BvhNode::new_from_list(objects, 0., 1.));
 
-    light_glass.add(light_obj);
-    light_glass.add(tp(glass_ball));
-    // light_glass.add(tp(moved_cube));
+    lights.add(light_obj);
+    lights.add(glass_ball);
+    lights.add(moved_cube);
 }

@@ -1,9 +1,12 @@
 pub mod cos_pdf;
 pub mod hittable_pdf;
 
-use std::sync::Arc;
+use crate::{
+    basic::{rand_1, vec3::Vec3},
+    hittable::Hittable,
+};
 
-use crate::basic::{rand_1, vec3::Vec3};
+use self::{cos_pdf::CosinePDF, hittable_pdf::HittablePDF};
 
 pub trait PDF {
     fn value(&self, dir: &Vec3) -> f64;
@@ -13,13 +16,16 @@ pub trait PDF {
 
 //=================================================
 
-pub struct MixedPDF {
-    scatter_pdf: Arc<dyn PDF>,
-    light_pdf: Arc<dyn PDF>,
+pub struct MixedPDF<'a, TH>
+where
+    TH: Hittable,
+{
+    scatter_pdf: CosinePDF,
+    light_pdf: HittablePDF<'a, TH>,
 }
 
-impl MixedPDF {
-    pub fn new(scatter_pdf: Arc<dyn PDF>, light_pdf: Arc<dyn PDF>) -> Self {
+impl<'a, TH: Hittable> MixedPDF<'a, TH> {
+    pub fn new(scatter_pdf: CosinePDF, light_pdf: HittablePDF<'a, TH>) -> Self {
         Self {
             scatter_pdf,
             light_pdf,
@@ -27,7 +33,7 @@ impl MixedPDF {
     }
 }
 
-impl PDF for MixedPDF {
+impl<'a, TH: Hittable> PDF for MixedPDF<'a, TH> {
     fn value(&self, dir: &Vec3) -> f64 {
         0.7 * self.scatter_pdf.value(dir) + 0.3 * self.light_pdf.value(dir)
     }

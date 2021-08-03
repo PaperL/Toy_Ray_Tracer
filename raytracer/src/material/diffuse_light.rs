@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     basic::{
         ray::Ray,
@@ -11,23 +9,29 @@ use crate::{
 
 use super::Material;
 
-pub struct DiffuseLight {
-    emit: Arc<dyn Texture>,
+#[derive(Clone)]
+pub struct DiffuseLight<TT>
+where
+    TT: Texture,
+{
+    emit: TT,
 }
 
-impl DiffuseLight {
-    pub fn new(emit: Arc<dyn Texture>) -> Self {
+impl<TT: Texture> DiffuseLight<TT> {
+    pub fn new(emit: TT) -> Self {
         Self { emit }
     }
+}
 
+impl DiffuseLight<SolidColor> {
     pub fn new_from_color(color_value: RGBColor) -> Self {
         Self {
-            emit: Arc::new(SolidColor::new(color_value)),
+            emit: SolidColor::new(color_value),
         }
     }
 }
 
-impl Material for DiffuseLight {
+impl<TT: Texture> Material for DiffuseLight<TT> {
     fn emitted(&self, _ray: &Ray, _rec: &HitRecord, u: f64, v: f64, p: Point3) -> RGBColor {
         self.emit.value(u, v, p)
         // if rec.front_face {

@@ -8,6 +8,7 @@ use rand::random;
 
 use super::ScatterRecord;
 
+#[derive(Clone)]
 pub struct Dielectric {
     pub ir: f64, // Index of Refraction, 折射率
 }

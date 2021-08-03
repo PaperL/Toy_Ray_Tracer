@@ -1,7 +1,7 @@
 pub mod instance;
 pub mod object;
 
-use std::{f64::consts::PI, sync::Arc};
+use std::f64::consts::PI;
 
 use rand::prelude::SliceRandom;
 
@@ -40,24 +40,24 @@ pub trait Hittable: Send + Sync {
 //=================================================
 
 #[derive(Clone)]
-pub struct HitRecord {
-    pub p: Point3,              // 碰撞点
-    pub normal: Vec3,           // 外侧法向量
-    pub mat: Arc<dyn Material>, // 材质
-    pub t: f64,                 // 碰撞点对应 Ray::at(t)
-    pub front_face: bool,       // 光线是否来自外侧
-    pub u: f64,                 // 碰撞点对应物体的 u,v, 用于计算贴图
-    pub v: f64,                 //
+pub struct HitRecord<'a> {
+    pub p: Point3,             // 碰撞点
+    pub normal: Vec3,          // 外侧法向量
+    pub mat: &'a dyn Material, // 材质
+    pub t: f64,                // 碰撞点对应 Ray::at(t)
+    pub front_face: bool,      // 光线是否来自外侧
+    pub u: f64,                // 碰撞点对应物体的 u,v, 用于计算贴图
+    pub v: f64,                //
 }
 
-impl HitRecord {
+impl<'a> HitRecord<'a> {
     fn new(
         u: f64,
         v: f64,
         t: f64,
         ray: &Ray,
         outward_normal: &Vec3,
-        mat: Arc<dyn Material>,
+        mat: &'a dyn Material,
     ) -> Self {
         let mut tmp_rec = Self {
             p: ray.at(t),
@@ -86,14 +86,17 @@ impl HitRecord {
 
 //=================================================
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct HittableList {
-    pub objects: Vec<Arc<dyn Hittable>>,
+    pub objects: Vec<Box<dyn Hittable>>,
 }
 
 impl HittableList {
-    pub fn add(&mut self, object: Arc<dyn Hittable>) {
-        self.objects.push(object);
+    pub fn add<TH>(&mut self, obj: TH)
+    where
+        TH: Hittable + 'static,
+    {
+        self.objects.push(Box::new(obj));
     }
 }
 
@@ -119,8 +122,8 @@ impl Hittable for HittableList {
 
         let mut tot_box = AABB::default();
         let mut first_flag = true;
-        for item in &self.objects {
-            if let Some(tmp_box) = item.bounding_box(time, dur) {
+        for obj in &self.objects {
+            if let Some(tmp_box) = obj.bounding_box(time, dur) {
                 if !first_flag {
                     tot_box = AABB::surrounding_box(&tot_box, &tmp_box);
                 } else {

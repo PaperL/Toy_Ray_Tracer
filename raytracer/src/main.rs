@@ -26,19 +26,20 @@ use crate::{
     basic::{
         camera::Camera,
         ray::Ray,
-        tp,
         vec3::{Point3, RGBColor, Vec3},
         INFINITESIMAL,
     },
     hittable::{Hittable, HittableList},
+    material::ScaRecData,
+    scene::cornell_box_bvh,
 };
 
 //---------------------------------------------------------------------------------
 
 fn ray_color(
     ray: &Ray,
-    world: Arc<dyn Hittable>,
-    lights: Arc<dyn Hittable>,
+    world: &HittableList,
+    lights: &HittableList,
     background: &RGBColor,
     depth: i32,
 ) -> RGBColor {
@@ -51,21 +52,24 @@ fn ray_color(
             .emitted(ray, &hit_rec, hit_rec.u, hit_rec.v, hit_rec.p);
 
         if let Some(sca_rec) = hit_rec.mat.scatter(ray, &hit_rec) {
-            if let Some(specular_ray) = sca_rec.specular {
-                sca_rec.attenutaion * ray_color(&specular_ray, world, lights, background, depth - 1)
-            } else {
-                let light_pdf = HittablePDF::new(hit_rec.p, lights.clone());
-                let mixed_pdf = MixedPDF::new(sca_rec.pdf.unwrap(), tp(light_pdf));
+            match sca_rec.dat {
+                ScaRecData::Specular(ray) => {
+                    sca_rec.attenutaion * ray_color(&ray, world, lights, background, depth - 1)
+                }
+                ScaRecData::Pdf(pdf) => {
+                    let light_pdf = HittablePDF::new(hit_rec.p, lights);
+                    let mixed_pdf = MixedPDF::new(pdf, light_pdf);
 
-                let pdf_dir = mixed_pdf.generate();
-                let pdf_val = mixed_pdf.value(&pdf_dir);
-                let scattered = Ray::new(hit_rec.p, pdf_dir, ray.tm);
+                    let pdf_dir = mixed_pdf.generate();
+                    let pdf_val = mixed_pdf.value(&pdf_dir);
+                    let scattered = Ray::new(hit_rec.p, pdf_dir, ray.tm);
 
-                emitted
-                    + sca_rec.attenutaion
-                        * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
-                        * ray_color(&scattered, world, lights, background, depth - 1)
-                        / pdf_val
+                    emitted
+                        + sca_rec.attenutaion
+                            * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
+                            * ray_color(&scattered, world, lights, background, depth - 1)
+                            / pdf_val
+                }
             }
         } else {
             emitted
@@ -92,7 +96,7 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 4;
+    const THREAD_NUMBER: usize = 6;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
@@ -116,35 +120,31 @@ fn main() {
     );
 
     // World
-    let mut world = HittableList::default();
-    let mut lights = HittableList::default();
-    let mut background = RGBColor::default();
+    // let mut world = HittableList::default();
+    // let mut lights = HittableList::default();
+    let background = RGBColor::new(0., 0., 0.);
 
     // Camera
-    let mut look_from = Point3::default();
-    let mut look_at = Point3::default();
+    let look_from = Point3::new(278., 278., -800.);
+    let look_at = Point3::new(278., 278., 0.);
     let vup = Vec3::new(0., 1., 0.);
-    let mut vfov = 0.;
+    let vfov = 40.;
     let aperture = 0.;
     let focus_dist = 1.;
 
     // Scene
-    const SCENE_ID: i32 = 0;
-    match SCENE_ID {
-        0 => {
-            scene::cornell_box_bvh(
-                &mut world,
-                &mut lights,
-                &mut background,
-                &mut look_from,
-                &mut look_at,
-                &mut vfov,
-            );
-        }
-        _ => {
-            panic!("Unexpected SCENE_ID in main()!");
-        }
-    }
+    // const SCENE_ID: i32 = 0;
+    // match SCENE_ID {
+    //     0 => {
+    //         scene::cornell_box_bvh(
+    //             &mut world,
+    //             &mut lights,
+    //         );
+    //     }
+    //     _ => {
+    //         panic!("Unexpected SCENE_ID in main()!");
+    //     }
+    // }
 
     // Camera
     let cam = Camera::new(
@@ -184,8 +184,9 @@ fn main() {
             line_end = IMAGE_HEIGHT;
         }
 
-        let section_world = world.clone();
-        let section_lights = lights.clone();
+        let mut section_world = HittableList::default();
+        let mut section_lights = HittableList::default();
+        cornell_box_bvh(&mut section_world, &mut section_lights);
 
         let mp = multiprogress.clone();
         let progress_bar = mp.add(ProgressBar::new(
@@ -203,8 +204,6 @@ fn main() {
                 progress_bar.set_position(0);
 
                 let channel_send = tx;
-                let world_ptr = tp(section_world);
-                let lights_ptr = tp(section_lights);
 
                 let mut section_pixel_color = Vec::<RGBColor>::new();
 
@@ -219,8 +218,8 @@ fn main() {
                             let ray = cam.get_ray(u, v);
                             pixel_color += ray_color(
                                 &ray,
-                                world_ptr.clone(),
-                                lights_ptr.clone(),
+                                &section_world,
+                                &section_lights,
                                 &background,
                                 MAX_DEPTH,
                             );
