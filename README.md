@@ -3,7 +3,7 @@
 ## 简介
 
 - 作者：上海交通大学，2020级ACM班，PaperL
-- 版本：`v0.5.1`
+- 版本：`v0.5.2`
 - 说明：2020-2021学年暑期小学期，PPCA课程项目。[本项目题面](https://github.com/aik2mlj/raytracer-tutorial)，[原题面](https://github.com/skyzh/raytracer-tutorial)
 
 - 特别感谢：
@@ -40,7 +40,8 @@
   - [x] 实现 `Transform` 类的 PDF 功能
   - [x] 修正教程中 PDF 相关公式错误，实现更合理的混合多种 PDF 的方式
   - [x] 使用泛型避免不定长的 `dyn` 类型相对于定长类型的额外开销
-  - [ ] 实现 `Triangle` 类
+  - [x] 实现 `Triangle` 类
+  - [x] 扩展 `Instance` 类
   - [ ] 使用过程宏生成静态 BVH 数据，提高渲染效率
 
 - 扩展功能
@@ -63,9 +64,9 @@
     - `vec3`, `ray`, `camera`, `onb`
   - **hittable**
     - **instance**
-      - `translate`, `rotate_y`, `flip`
+      - `translate`, `rotate`, `motion_translate`, `motion_rotate`, `constant_medium`
     - **object**
-      - `sphere`, `moving_sphere`, `rectangle`, `cube`, `constant_medium`
+      - `sphere`, `rectangle`, `cube`, `triangle`
   - **bvh**
     - `aabb`, `bvh_node`
   - **material**
@@ -73,7 +74,7 @@
   - **pdf**
     - `cos_pdf`, `hittable_pdf`
   - **texture**
-    - `solid_color`, `checker_texture`, `image_texture`
+    - `solid_color`, `image_texture`
 
 > 自动代码格式化指令 `cargo fmt`
 >

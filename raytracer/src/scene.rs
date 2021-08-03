@@ -2,12 +2,15 @@ use crate::{
     basic::vec3::{Point3, RGBColor, Vec3},
     bvh::bvh_node::BvhNode,
     hittable::{
-        instance::{rotate_y::RotateY, translate::Translate},
+        instance::{
+            constant_medium::ConstantMedium, motion_rotate::MotionRotate,
+            motion_translate::MotionTranslate, rotate::Rotate, translate::Translate,
+        },
         object::{
-            constant_medium::ConstantMedium,
             cube::Cube,
             rectangle::{OneWayRectangle, Rectangle},
             sphere::Sphere,
+            triangle::Triangle,
         },
         HittableList,
     },
@@ -24,8 +27,8 @@ pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
     let red = Lambertian::new(SolidColor::new_from_value(0.65, 0.05, 0.05));
     let green = Lambertian::new(SolidColor::new_from_value(0.12, 0.45, 0.15));
     let white = Lambertian::new(SolidColor::new_from_value(0.73, 0.73, 0.73));
-    // 4700K
-    let light = DiffuseLight::new_from_color(RGBColor::new(255., 223., 184.) / 255. * 20.);
+    let light_white = DiffuseLight::new_from_color(RGBColor::new(255., 223., 184.) / 255. * 30.); // Color of 4700K
+    let light_gloden = DiffuseLight::new_from_color(RGBColor::new(248., 231., 28.) / 255. * 120.);
     let aluminum = Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.);
     let glass = Dielectric::new(1.5);
 
@@ -47,26 +50,60 @@ pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
     objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., white));
 
     // Light
-    let light_obj = OneWayRectangle::new(2, 213., 343., 227., 332., 554., light, false);
+    let light_obj = OneWayRectangle::new(2, 213., 343., 227., 332., 554., light_white, false);
     objects.add(light_obj.clone());
 
     // Cube
     let cube = Cube::new(
         Point3::new(0., 0., 0.),
         Point3::new(165., 330., 165.),
-        aluminum,
+        aluminum.clone(),
     );
-    let moved_cube = Translate::new(RotateY::new(cube, 15.), Vec3::new(265., 0., 295.));
-    let cm = ConstantMedium::new_from_color(moved_cube, 0.01, RGBColor::new(0.0, 0.0, 0.4));
+    let moved_cube = Translate::new(Rotate::new(cube, 1, 15.), Vec3::new(295., 0., 255.));
+    let cm = ConstantMedium::new_from_color(moved_cube, 0.01, RGBColor::new(0.0, 0.0, 0.3));
     objects.add(cm);
 
-    let glass_ball = Sphere::new(Point3::new(190., 90., 190.), 90., glass);
+    // Glass Ball
+    let glass_ball = Sphere::new(Point3::new(200., 90., 150.), 90., glass);
     objects.add(glass_ball.clone());
 
+    // Triangle
+    let triangle = Triangle::new(
+        [
+            Vec3::new(250., 0., 500.),
+            Vec3::new(50., 0., 200.),
+            Vec3::new(0., 260., 350.),
+        ],
+        aluminum,
+    );
+    objects.add(triangle.clone());
+
+    // Golden Snitch
+    //(277., 277., 50.)
+    let snitch = Sphere::new(Point3::new(140., 0., 0.), 10., light_gloden);
+    let flying_snitch = MotionTranslate::new(
+        MotionRotate::new(snitch, 1, 360. * 2.5, 0., 1.),
+        Vec3::new(0., 320., 0.),
+        0.,
+        1.,
+    );
+    let moved_flaying_snitch = Translate::new(flying_snitch, Vec3::new(405., 0., 410.));
+    objects.add(moved_flaying_snitch);
+
+    // Air
+    // let air = ConstantMedium::new_from_color(
+    //     Cube::new(Vec3::new(0., 0., 0.), Vec3::new(555., 555., 555.), white),
+    //     0.000001,
+    //     RGBColor::new(1.0, 1.0, 1.0),
+    // );
+    // objects.add(air);
+
     // *world = objects;
+    // BVH
     world.add(BvhNode::new_from_list(objects, 0., 1.));
 
+    // Hittable PDF
     lights.add(light_obj);
     lights.add(glass_ball);
-    // lights.add(moved_cube);
+    lights.add(triangle);
 }

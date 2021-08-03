@@ -22,7 +22,8 @@ where
     pub dir: u32,
     pub coo: [[f64; 2]; 3],
     pub mat: TM,
-    di: [usize; 3], // dimension index
+    dio: [usize; 3], // dimension order
+    pub area: f64,
 }
 
 impl<TM: Material> Rectangle<TM> {
@@ -32,24 +33,25 @@ impl<TM: Material> Rectangle<TM> {
             dir,
             coo: Default::default(),
             mat,
-            di: Default::default(),
+            dio: Default::default(),
+            area: (a2 - a1) * (a4 - a3),
         }; // temp rectangle
 
         match dir {
             // xy
-            0 => tr.di = [0, 1, 2],
+            0 => tr.dio = [0, 1, 2],
             // yz
-            1 => tr.di = [1, 2, 0],
+            1 => tr.dio = [1, 2, 0],
             // xz
-            2 => tr.di = [0, 2, 1],
+            2 => tr.dio = [0, 2, 1],
             _ => panic!("Get unexpected dir in Rectangle::new!"),
         }
-        tr.coo[tr.di[0]][0] = a1;
-        tr.coo[tr.di[0]][1] = a2;
-        tr.coo[tr.di[1]][0] = a3;
-        tr.coo[tr.di[1]][1] = a4;
-        tr.coo[tr.di[2]][0] = k;
-        tr.coo[tr.di[2]][1] = k;
+        tr.coo[tr.dio[0]][0] = a1;
+        tr.coo[tr.dio[0]][1] = a2;
+        tr.coo[tr.dio[1]][0] = a3;
+        tr.coo[tr.dio[1]][1] = a4;
+        tr.coo[tr.dio[2]][0] = k;
+        tr.coo[tr.dio[2]][1] = k;
 
         tr
     }
@@ -57,20 +59,20 @@ impl<TM: Material> Rectangle<TM> {
 
 impl<TM: Material> Hittable for Rectangle<TM> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let a1 = self.coo[self.di[0]][0];
-        let a2 = self.coo[self.di[0]][1];
-        let a3 = self.coo[self.di[1]][0];
-        let a4 = self.coo[self.di[1]][1];
-        let k = self.coo[self.di[2]][0];
+        let a1 = self.coo[self.dio[0]][0];
+        let a2 = self.coo[self.dio[0]][1];
+        let a3 = self.coo[self.dio[1]][0];
+        let a4 = self.coo[self.dio[1]][1];
+        let k = self.coo[self.dio[2]][0];
 
-        let t = (k - ray.orig[self.di[2]]) / ray.dir[self.di[2]];
+        let t = (k - ray.orig[self.dio[2]]) / ray.dir[self.dio[2]];
         if t < t_min || t > t_max || t.is_nan() {
             // ray.dir[di[2]] may be 0
             return None;
         }
 
-        let b1 = ray.orig[self.di[0]] + t * ray.dir[self.di[0]];
-        let b2 = ray.orig[self.di[1]] + t * ray.dir[self.di[1]];
+        let b1 = ray.orig[self.dio[0]] + t * ray.dir[self.dio[0]];
+        let b2 = ray.orig[self.dio[1]] + t * ray.dir[self.dio[1]];
         if b1 < a1 || b1 > a2 || b2 < a3 || b2 > a4 {
             return None;
         }
@@ -96,30 +98,24 @@ impl<TM: Material> Hittable for Rectangle<TM> {
         let thickness = 0.1;
         Some(AABB {
             min: Point3::new(
-                self.coo[0][0] + (if self.di[2] == 0 { -thickness } else { 0. }),
-                self.coo[1][0] + (if self.di[2] == 1 { -thickness } else { 0. }),
-                self.coo[2][0] + (if self.di[2] == 2 { -thickness } else { 0. }),
+                self.coo[0][0] + (if self.dio[2] == 0 { -thickness } else { 0. }),
+                self.coo[1][0] + (if self.dio[2] == 1 { -thickness } else { 0. }),
+                self.coo[2][0] + (if self.dio[2] == 2 { -thickness } else { 0. }),
             ),
             max: Point3::new(
-                self.coo[0][1] + (if self.di[2] == 0 { thickness } else { 0. }),
-                self.coo[1][1] + (if self.di[2] == 1 { thickness } else { 0. }),
-                self.coo[2][1] + (if self.di[2] == 2 { thickness } else { 0. }),
+                self.coo[0][1] + (if self.dio[2] == 0 { thickness } else { 0. }),
+                self.coo[1][1] + (if self.dio[2] == 1 { thickness } else { 0. }),
+                self.coo[2][1] + (if self.dio[2] == 2 { thickness } else { 0. }),
             ),
         })
     }
 
     fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
         if let Some(rec) = self.hit(&Ray::new(*orig, *dir, 0.), INFINITESIMAL, INFINITY) {
-            let a1 = self.coo[self.di[0]][0];
-            let a2 = self.coo[self.di[0]][1];
-            let a3 = self.coo[self.di[1]][0];
-            let a4 = self.coo[self.di[1]][1];
-            let area = (a2 - a1) * (a4 - a3);
-
             let dis_sqrd = rec.t.powi(2) * dir.length_squared();
             let cosine = (Vec3::dot(dir, &rec.normal) / dir.length()).abs();
 
-            Self::map_to(dis_sqrd / (cosine * area), 50., 5.)
+            Self::map_to(dis_sqrd / (cosine * self.area), 50., 5.)
         } else {
             Self::map_to(1000., 50., 5.)
         }
@@ -128,17 +124,17 @@ impl<TM: Material> Hittable for Rectangle<TM> {
     fn rand_dir(&self, orig: &Point3) -> Vec3 {
         let mut rnd = rand::thread_rng();
         let rand_point = Point3::new(
-            if self.di[2] == 0 {
+            if self.dio[2] == 0 {
                 self.coo[0][0]
             } else {
                 rnd.gen_range(self.coo[0][0]..self.coo[0][1])
             },
-            if self.di[2] == 1 {
+            if self.dio[2] == 1 {
                 self.coo[1][0]
             } else {
                 rnd.gen_range(self.coo[1][0]..self.coo[1][1])
             },
-            if self.di[2] == 2 {
+            if self.dio[2] == 2 {
                 self.coo[2][0]
             } else {
                 rnd.gen_range(self.coo[2][0]..self.coo[2][1])
@@ -159,7 +155,8 @@ where
     pub dir: u32,
     pub coo: [[f64; 2]; 3],
     pub mat: TM,
-    di: [usize; 3], // dimension index
+    dio: [usize; 3], // dimension order
+    pub area: f64,
     face_coo_pos: bool,
 }
 
@@ -179,25 +176,27 @@ impl<TM: Material> OneWayRectangle<TM> {
             dir,
             coo: Default::default(),
             mat,
-            di: Default::default(),
+            dio: Default::default(),
+            area: (a2 - a1) * (a4 - a3),
             face_coo_pos,
         }; // temp rectangle
 
-        match dir {
+        tr.dio = match dir {
             // xy
-            0 => tr.di = [0, 1, 2],
+            0 => [0, 1, 2],
             // yz
-            1 => tr.di = [1, 2, 0],
+            1 => [1, 2, 0],
             // xz
-            2 => tr.di = [0, 2, 1],
+            2 => [0, 2, 1],
             _ => panic!("Get unexpected dir in Rectangle::new!"),
-        }
-        tr.coo[tr.di[0]][0] = a1;
-        tr.coo[tr.di[0]][1] = a2;
-        tr.coo[tr.di[1]][0] = a3;
-        tr.coo[tr.di[1]][1] = a4;
-        tr.coo[tr.di[2]][0] = k;
-        tr.coo[tr.di[2]][1] = k;
+        };
+
+        tr.coo[tr.dio[0]][0] = a1;
+        tr.coo[tr.dio[0]][1] = a2;
+        tr.coo[tr.dio[1]][0] = a3;
+        tr.coo[tr.dio[1]][1] = a4;
+        tr.coo[tr.dio[2]][0] = k;
+        tr.coo[tr.dio[2]][1] = k;
 
         tr
     }
@@ -205,20 +204,20 @@ impl<TM: Material> OneWayRectangle<TM> {
 
 impl<TM: Material> Hittable for OneWayRectangle<TM> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let a1 = self.coo[self.di[0]][0];
-        let a2 = self.coo[self.di[0]][1];
-        let a3 = self.coo[self.di[1]][0];
-        let a4 = self.coo[self.di[1]][1];
-        let k = self.coo[self.di[2]][0];
+        let a1 = self.coo[self.dio[0]][0];
+        let a2 = self.coo[self.dio[0]][1];
+        let a3 = self.coo[self.dio[1]][0];
+        let a4 = self.coo[self.dio[1]][1];
+        let k = self.coo[self.dio[2]][0];
 
-        let t = (k - ray.orig[self.di[2]]) / ray.dir[self.di[2]];
+        let t = (k - ray.orig[self.dio[2]]) / ray.dir[self.dio[2]];
         if t < t_min || t > t_max || t.is_nan() {
             // ray.dir[di[2]] may be 0
             return None;
         }
 
-        let b1 = ray.orig[self.di[0]] + t * ray.dir[self.di[0]];
-        let b2 = ray.orig[self.di[1]] + t * ray.dir[self.di[1]];
+        let b1 = ray.orig[self.dio[0]] + t * ray.dir[self.dio[0]];
+        let b2 = ray.orig[self.dio[1]] + t * ray.dir[self.dio[1]];
         if b1 < a1 || b1 > a2 || b2 < a3 || b2 > a4 {
             return None;
         }
@@ -248,30 +247,24 @@ impl<TM: Material> Hittable for OneWayRectangle<TM> {
         let thickness = 0.1;
         Some(AABB {
             min: Point3::new(
-                self.coo[0][0] + (if self.di[2] == 0 { -thickness } else { 0. }),
-                self.coo[1][0] + (if self.di[2] == 1 { -thickness } else { 0. }),
-                self.coo[2][0] + (if self.di[2] == 2 { -thickness } else { 0. }),
+                self.coo[0][0] + (if self.dio[2] == 0 { -thickness } else { 0. }),
+                self.coo[1][0] + (if self.dio[2] == 1 { -thickness } else { 0. }),
+                self.coo[2][0] + (if self.dio[2] == 2 { -thickness } else { 0. }),
             ),
             max: Point3::new(
-                self.coo[0][1] + (if self.di[2] == 0 { thickness } else { 0. }),
-                self.coo[1][1] + (if self.di[2] == 1 { thickness } else { 0. }),
-                self.coo[2][1] + (if self.di[2] == 2 { thickness } else { 0. }),
+                self.coo[0][1] + (if self.dio[2] == 0 { thickness } else { 0. }),
+                self.coo[1][1] + (if self.dio[2] == 1 { thickness } else { 0. }),
+                self.coo[2][1] + (if self.dio[2] == 2 { thickness } else { 0. }),
             ),
         })
     }
 
     fn pdf_value(&self, orig: &Point3, dir: &Vec3) -> f64 {
         if let Some(rec) = self.hit(&Ray::new(*orig, *dir, 0.), INFINITESIMAL, INFINITY) {
-            let a1 = self.coo[self.di[0]][0];
-            let a2 = self.coo[self.di[0]][1];
-            let a3 = self.coo[self.di[1]][0];
-            let a4 = self.coo[self.di[1]][1];
-            let area = (a2 - a1) * (a4 - a3);
-
             let dis_sqrd = rec.t.powi(2) * dir.length_squared();
             let cosine = (Vec3::dot(dir, &rec.normal) / dir.length()).abs();
 
-            Self::map_to(dis_sqrd / (cosine * area), 50., 5.)
+            Self::map_to(dis_sqrd / (cosine * self.area), 50., 5.)
         } else {
             Self::map_to(1000., 50., 5.)
         }
@@ -280,17 +273,17 @@ impl<TM: Material> Hittable for OneWayRectangle<TM> {
     fn rand_dir(&self, orig: &Point3) -> Vec3 {
         let mut rnd = rand::thread_rng();
         let rand_point = Point3::new(
-            if self.di[2] == 0 {
+            if self.dio[2] == 0 {
                 self.coo[0][0]
             } else {
                 rnd.gen_range(self.coo[0][0]..self.coo[0][1])
             },
-            if self.di[2] == 1 {
+            if self.dio[2] == 1 {
                 self.coo[1][0]
             } else {
                 rnd.gen_range(self.coo[1][0]..self.coo[1][1])
             },
-            if self.di[2] == 2 {
+            if self.dio[2] == 2 {
                 self.coo[2][0]
             } else {
                 rnd.gen_range(self.coo[2][0]..self.coo[2][1])

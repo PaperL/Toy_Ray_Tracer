@@ -7,7 +7,7 @@ mod scene;
 pub mod texture;
 
 use std::{
-    f64::INFINITY,
+    f64::{consts::PI, INFINITY},
     fmt::Display,
     fs::File,
     process::exit,
@@ -85,7 +85,7 @@ fn main() {
     print!("{}[2J", 27 as char); // clear screen
     print!("{esc}[2J{esc}[1;1H", esc = 27 as char); // set cursor at 1,1
     println!(
-        "\n         {}  {}\n",
+        "\n         {}    {}\n",
         style("PaperL's Toy Ray Tracer").cyan(),
         style(format!("v{}", env!("CARGO_PKG_VERSION"))).yellow(),
     );
@@ -102,26 +102,30 @@ fn main() {
     const ASPECT_RATIO: f64 = 1.;
     const IMAGE_WIDTH: usize = 2000;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
+
     const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
-    const JPEG_QUALITY: u8 = 100;
+
+    const HALO_SIZE: i32 = IMAGE_WIDTH as i32 / 10;
+
+    const JPEG_QUALITY: u8 = 80;
+
     println!(
-        "         Image size:              {}",
+        "         Image size:                {}",
         style(IMAGE_WIDTH.to_string() + &"x".to_string() + &IMAGE_HEIGHT.to_string()).yellow()
     );
     println!(
-        "         Sample number per pixel: {}",
+        "         Sample number per pixel:   {}",
         style(SAMPLES_PER_PIXEL.to_string()).yellow()
     );
     println!(
-        "         Reflection max depth:    {}",
+        "         Reflection max depth:      {}",
         style(MAX_DEPTH.to_string()).yellow()
     );
 
+    let mut img: RgbImage = ImageBuffer::new(IMAGE_WIDTH as u32, IMAGE_HEIGHT as u32);
+
     // World
-    // let mut world = HittableList::default();
-    // let mut lights = HittableList::default();
     let background = RGBColor::new(0., 0., 0.);
 
     // Camera
@@ -270,14 +274,81 @@ fn main() {
     );
 
     let mut pixel_id = 0;
+    let mut halo_cnt = 0;
+    let mut light_pixel_cnt = 0;
+    let mut halo = [[RGBColor::default(); IMAGE_WIDTH]; IMAGE_HEIGHT];
     for y in 0..IMAGE_HEIGHT as u32 {
         for x in 0..IMAGE_WIDTH as u32 {
+            let pixel_color = output_pixel_color[pixel_id] / SAMPLES_PER_PIXEL as f64;
+            let sum = pixel_color.x + pixel_color.y + pixel_color.z;
+            if sum > 4. {
+                light_pixel_cnt += 1;
+
+                let mut y1 = y as i32 - HALO_SIZE;
+                let mut y2 = y as i32 + HALO_SIZE;
+                let mut x1 = x as i32 - HALO_SIZE;
+                let mut x2 = x as i32 + HALO_SIZE;
+
+                if y1 < 0 {
+                    y1 = 0;
+                }
+                if y2 > IMAGE_HEIGHT as i32 {
+                    y2 = IMAGE_HEIGHT as i32;
+                }
+                if x1 < 0 {
+                    x1 = 0;
+                }
+                if x2 > IMAGE_WIDTH as i32 {
+                    x2 = IMAGE_WIDTH as i32;
+                }
+
+                for ty in y1..y2 {
+                    for tx in x1..x2 {
+                        let h = ((tx - x as i32) * (ty - y as i32)).abs();
+                        const MAX_MULTIPLE: i32 = HALO_SIZE * 4;
+                        if h <= MAX_MULTIPLE {
+                            if halo[ty as usize][tx as usize].is_zero() {
+                                halo_cnt += 1;
+                            }
+                            halo[ty as usize][tx as usize] += pixel_color / sum
+                                * f64::atan((MAX_MULTIPLE - h) as f64 * (4. / HALO_SIZE as f64))
+                                * 0.5
+                                / PI;
+                        }
+                    }
+                }
+            }
+            pixel_id += 1;
+        }
+    }
+    println!(
+        "         Number of light pixels:    {:6} ({} of all pixels)",
+        style(light_pixel_cnt.to_string()).yellow(),
+        style(format!(
+            "{:.2}%",
+            (light_pixel_cnt as f64 / (IMAGE_WIDTH * IMAGE_HEIGHT) as f64)
+        ))
+        .yellow(),
+    );
+    println!(
+        "         Number of pixels of halo:  {:6} ({} of all pixels)",
+        style(halo_cnt.to_string()).yellow(),
+        style(format!(
+            "{:.2}%",
+            (halo_cnt as f64 / (IMAGE_WIDTH * IMAGE_HEIGHT) as f64)
+        ))
+        .yellow(),
+    );
+
+    pixel_id = 0;
+    for y in 0..IMAGE_HEIGHT as u32 {
+        for x in 0..IMAGE_WIDTH as u32 {
+            let pixel_color = output_pixel_color[pixel_id].calc_color(SAMPLES_PER_PIXEL)
+                + halo[y as usize][x as usize];
+
             let pixel = img.get_pixel_mut(x, IMAGE_HEIGHT as u32 - y - 1);
-            *pixel = image::Rgb(
-                output_pixel_color[pixel_id]
-                    .calc_color(SAMPLES_PER_PIXEL)
-                    .to_u8_array(),
-            );
+            *pixel = image::Rgb(pixel_color.to_u8_array());
+
             pixel_id += 1;
         }
     }
@@ -290,11 +361,11 @@ fn main() {
         style("Outping Image...").green()
     );
     println!(
-        "         Image format:            {}",
+        "         Image format:              {}",
         style("JPEG").yellow()
     );
     println!(
-        "         JPEG image quality:      {}",
+        "         JPEG image quality:        {}",
         style(JPEG_QUALITY.to_string()).yellow()
     );
 

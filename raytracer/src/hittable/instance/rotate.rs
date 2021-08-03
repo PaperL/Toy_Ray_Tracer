@@ -12,18 +12,27 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct RotateY<TH>
+pub struct Rotate<TH>
 where
     TH: Hittable,
 {
-    obj: TH,
+    dir: u32,
+    pub obj: TH,
     sin_theta: f64,
     cos_theta: f64,
-    aabb_box: AABB,
+    pub aabb_box: AABB,
+    dio: [usize; 3], // dimension order
 }
 
-impl<TH: Hittable> RotateY<TH> {
-    pub fn new(obj: TH, angle: f64) -> Self {
+impl<TH: Hittable> Rotate<TH> {
+    pub fn new(obj: TH, dir: u32, angle: f64) -> Self {
+        let dio = match dir {
+            0 => [2, 1, 0], // x
+            1 => [0, 2, 1], // y
+            2 => [1, 0, 2], // z
+            _ => panic!("Get unexpected dir in Rotate::new!"),
+        };
+
         let radians = degree_to_radian(angle);
         let tmp_box = obj.bounding_box(0., 1.).unwrap();
         let sin_theta = f64::sin(radians);
@@ -35,14 +44,18 @@ impl<TH: Hittable> RotateY<TH> {
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {
-                    let x = i as f64 * tmp_box.max.x + (1 - i) as f64 * tmp_box.min.x;
-                    let y = j as f64 * tmp_box.max.y + (1 - j) as f64 * tmp_box.min.y;
-                    let z = k as f64 * tmp_box.max.z + (1 - k) as f64 * tmp_box.min.z;
+                    let co = [
+                        i as f64 * tmp_box.max.x + (1 - i) as f64 * tmp_box.min.x,
+                        j as f64 * tmp_box.max.y + (1 - j) as f64 * tmp_box.min.y,
+                        k as f64 * tmp_box.max.z + (1 - k) as f64 * tmp_box.min.z,
+                    ];
 
-                    let new_x = cos_theta * x + sin_theta * z;
-                    let new_z = -sin_theta * x + cos_theta * z;
+                    let mut new_co = [0.; 3];
+                    new_co[dio[0]] = cos_theta * co[dio[0]] + sin_theta * co[dio[1]];
+                    new_co[dio[1]] = -sin_theta * co[dio[0]] + cos_theta * co[dio[1]];
+                    new_co[dio[2]] = co[dio[2]];
 
-                    let tester = Vec3::new(new_x, y, new_z);
+                    let tester = Vec3::new(new_co[0], new_co[1], new_co[2]);
                     for c in 0..3 {
                         min[c] = f64::min(min[c], tester[c]);
                         max[c] = f64::max(max[c], tester[c]);
@@ -53,33 +66,37 @@ impl<TH: Hittable> RotateY<TH> {
         let aabb_box = AABB::new(min, max);
 
         Self {
+            dir,
             obj,
             sin_theta,
             cos_theta,
             aabb_box,
+            dio,
         }
     }
 
-    pub fn rotated_orig(&self, orig: &Point3) -> Point3 {
+    fn rotated_orig(&self, orig: &Point3) -> Point3 {
         let mut r_orig = *orig;
 
-        r_orig[0] = self.cos_theta * orig[0] - self.sin_theta * orig[2];
-        r_orig[2] = self.sin_theta * orig[0] + self.cos_theta * orig[2];
+        r_orig[self.dio[0]] =
+            self.cos_theta * orig[self.dio[0]] - self.sin_theta * orig[self.dio[1]];
+        r_orig[self.dio[1]] =
+            self.sin_theta * orig[self.dio[0]] + self.cos_theta * orig[self.dio[1]];
 
         r_orig
     }
 
-    pub fn rotated_dir(&self, dir: &Vec3) -> Vec3 {
+    fn rotated_dir(&self, dir: &Vec3) -> Vec3 {
         let mut r_dir = *dir;
 
-        r_dir[0] = self.cos_theta * dir[0] - self.sin_theta * dir[2];
-        r_dir[2] = self.sin_theta * dir[0] + self.cos_theta * dir[2];
+        r_dir[self.dio[0]] = self.cos_theta * dir[self.dio[0]] - self.sin_theta * dir[self.dio[1]];
+        r_dir[self.dio[1]] = self.sin_theta * dir[self.dio[0]] + self.cos_theta * dir[self.dio[1]];
 
         r_dir
     }
 }
 
-impl<TH: Hittable> Hittable for RotateY<TH> {
+impl<TH: Hittable> Hittable for Rotate<TH> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let orig = self.rotated_orig(&ray.orig);
         let dir = self.rotated_dir(&ray.dir);
@@ -90,8 +107,10 @@ impl<TH: Hittable> Hittable for RotateY<TH> {
             let mut p = rec.p;
             let mut normal = rec.normal;
 
-            p[0] = self.cos_theta * rec.p[0] + self.sin_theta * rec.p[2];
-            p[2] = -self.sin_theta * rec.p[0] + self.cos_theta * rec.p[2];
+            p[self.dio[0]] =
+                self.cos_theta * rec.p[self.dio[0]] + self.sin_theta * rec.p[self.dio[1]];
+            p[self.dio[1]] =
+                -self.sin_theta * rec.p[self.dio[0]] + self.cos_theta * rec.p[self.dio[1]];
 
             normal[0] = self.cos_theta * rec.normal[0] + self.sin_theta * rec.normal[2];
             normal[2] = -self.sin_theta * rec.normal[0] + self.cos_theta * rec.normal[2];
