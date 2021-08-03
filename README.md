@@ -78,7 +78,7 @@
 
 > 自动代码格式化指令 `cargo fmt`
 >
-> 代码检查指令 `cargo clippy --all-targets --all-features`
+> 代码检查指令 `cargo clippy`
 
 
 
@@ -89,6 +89,9 @@
    - 浮点运算精度问题
    - `Rectangle` 的 `Hit` 函数会产生 `Nan`,  `pdf_value` 函数在无碰撞时产生错误的返回值 `0`
 2. 很好地学习了 Rust 语言基础
+   - mut, Trait
+   - 生命周期
+   - 泛型
 3. 对于基础的光追系统有了较为深入的认识
 4. 提高了关于 GitHub 的熟悉程度
    - GitAction 及 tag 的使用
