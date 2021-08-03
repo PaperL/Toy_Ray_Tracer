@@ -96,14 +96,14 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 2;
+    const THREAD_NUMBER: usize = 7;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
     const IMAGE_WIDTH: usize = 2000;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
 
-    const SAMPLES_PER_PIXEL: u32 = 1200;
+    const SAMPLES_PER_PIXEL: u32 = 1000;
     const MAX_DEPTH: i32 = 50;
 
     const HALO_SIZE: i32 = IMAGE_WIDTH as i32 / 10;
@@ -276,7 +276,7 @@ fn main() {
     let mut pixel_id = 0;
     let mut halo_cnt = 0;
     let mut light_pixel_cnt = 0;
-    let mut halo = [[RGBColor::default(); IMAGE_WIDTH]; IMAGE_HEIGHT];
+    let mut halo = vec![vec![RGBColor::default(); IMAGE_WIDTH]; IMAGE_HEIGHT];
     for y in 0..IMAGE_HEIGHT as u32 {
         for x in 0..IMAGE_WIDTH as u32 {
             let pixel_color = output_pixel_color[pixel_id] / SAMPLES_PER_PIXEL as f64;
