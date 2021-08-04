@@ -3,7 +3,7 @@
 ## 简介
 
 - 作者：上海交通大学，2020级ACM班，PaperL
-- 版本：`v0.5.2`
+- 版本：`v0.5.3`
 - 说明：2020-2021学年暑期小学期，PPCA课程项目。[本项目题面](https://github.com/aik2mlj/raytracer-tutorial)，[原题面](https://github.com/skyzh/raytracer-tutorial)
 
 - 特别感谢：
@@ -50,7 +50,7 @@
   - [x] 提供友好的控制台 UI 界面
   - [x] 实现多线程并行计算
   - [x] 以自定义质量因子的 `JPEG` 格式输出渲染结果，平衡图像大小与质量
-  - [ ] 支持从 `obj` 格式文件输入场景
+  - [x] 支持从 `obj` 格式文件输入场景
   - [ ] 支持从 `yaml` 或 `JSON` 文件读取场景并生成对应的静态 BVH 数据
   - [ ] 使用 `criterion crate` 实现基准测试 (Benchmark)，用于比较不同版本代码的差异
 

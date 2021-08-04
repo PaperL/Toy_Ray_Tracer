@@ -1,4 +1,5 @@
 pub mod instance;
+pub mod obj_model;
 pub mod object;
 
 use std::f64::consts::PI;
@@ -102,17 +103,17 @@ impl HittableList {
 
 impl Hittable for HittableList {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut rec = None;
+        let mut hit_rec = None;
         let mut closest_so_far = t_max;
 
         for i in &self.objects {
-            if let Some(temp_rec) = i.hit(ray, t_min, closest_so_far) {
-                closest_so_far = temp_rec.t;
-                rec = Some(temp_rec);
+            if let Some(tmp_hit_rec) = i.hit(ray, t_min, closest_so_far) {
+                closest_so_far = tmp_hit_rec.t;
+                hit_rec = Some(tmp_hit_rec);
             }
         }
 
-        rec
+        hit_rec
     }
 
     fn bounding_box(&self, time: f64, dur: f64) -> Option<AABB> {

@@ -1,6 +1,6 @@
 [package]
 name = "raytracer"
-version = "0.5.2"
+version = "0.5.3"
 authors = ["PaperL"]
 edition = "2018"
 
@@ -11,3 +11,4 @@ imageproc = "0.21"
 rusttype = "0.9"
 rand = "0.8"
 console = "0.9.1"
+tobj = "3.1.0"

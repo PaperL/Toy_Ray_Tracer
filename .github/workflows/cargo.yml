@@ -72,7 +72,7 @@ jobs:
             ### 📦 渲染参数
 
             - 📷 封闭的康奈尔盒子
-            - 📷 分辨率 2000x2000 px
+            - 📷 分辨率 1000x1000 px
             - 📷 JPEG 格式，质量因子 100
             - 📷 灯光色温 4700K
             - 🕹️ 像素采样数 1000
@@ -82,9 +82,7 @@ jobs:
 
             ### 🔎 新特性
 
-            - 🚩 新增三角形
-            - 🚩 Y轴旋转升级为三维旋转
-            - 🚩 新增动态平移以及动态旋转
+            - 🚩 支持从 OBJ 格式文件导入模型
           draft: false
           prerelease: false
       - name: Upload Release Asset 🚀
@@ -94,7 +92,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/output.jpg
+          asset_path: raytracer/output/output.jpg
           asset_name: output.jpg
           asset_content_type: image/jpg
           # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types

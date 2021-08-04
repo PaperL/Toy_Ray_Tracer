@@ -35,11 +35,11 @@ impl<'a, TH: Hittable> MixedPDF<'a, TH> {
 
 impl<'a, TH: Hittable> PDF for MixedPDF<'a, TH> {
     fn value(&self, dir: &Vec3) -> f64 {
-        0.7 * self.scatter_pdf.value(dir) + 0.3 * self.light_pdf.value(dir)
+        self.scatter_pdf.value(dir) + self.light_pdf.value(dir)
     }
 
     fn generate(&self) -> Vec3 {
-        if rand_1() < 0.65 {
+        if rand_1() < 0.7 {
             self.scatter_pdf.generate()
         } else {
             self.light_pdf.generate()

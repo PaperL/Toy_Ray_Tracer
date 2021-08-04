@@ -4,8 +4,9 @@ use crate::{
     hittable::{
         instance::{
             constant_medium::ConstantMedium, motion_rotate::MotionRotate,
-            motion_translate::MotionTranslate, rotate::Rotate, translate::Translate,
+            motion_translate::MotionTranslate, rotate::Rotate, translate::Translate, zoom::Zoom,
         },
+        obj_model::OBJModel,
         object::{
             cube::Cube,
             rectangle::{OneWayRectangle, Rectangle},
@@ -20,7 +21,7 @@ use crate::{
     texture::solid_color::SolidColor,
 };
 
-pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
+pub fn _cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
     let mut objects = HittableList::default();
 
     // Material
@@ -106,4 +107,54 @@ pub fn cornell_box_bvh(world: &mut HittableList, lights: &mut HittableList) {
     lights.add(light_obj);
     lights.add(glass_ball);
     lights.add(triangle);
+}
+
+pub fn paper_world(world: &mut HittableList, lights: &mut HittableList) {
+    let mut objects = HittableList::default();
+
+    // Material
+    let gray = Lambertian::new(SolidColor::new_from_value(0.73, 0.73, 0.73));
+    let red = Lambertian::new(SolidColor::new_from_value(0.65, 0.05, 0.05));
+    let green = Lambertian::new(SolidColor::new_from_value(0.12, 0.45, 0.15));
+    let light_white = DiffuseLight::new_from_color(RGBColor::new(255., 223., 184.) / 255. * 15.); // Color of 4700K
+    let glass = Dielectric::new(1.5);
+    // let aluminum = Metal::new(RGBColor::new(0.8, 0.85, 0.88), 0.);
+    // let black_metal = Metal::new(RGBColor::new(0.2, 0.2, 0.2), 0.01);
+
+    // Wall
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 0., red));
+    objects.add(Rectangle::new(1, 0., 555., 0., 555., 555., green));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 0., gray.clone()));
+    objects.add(Rectangle::new(2, 0., 555., 0., 555., 555., gray.clone()));
+    objects.add(OneWayRectangle::new(
+        0,
+        0.,
+        555.,
+        0.,
+        555.,
+        0.,
+        gray.clone(),
+        true,
+    ));
+    objects.add(Rectangle::new(0, 0., 555., 0., 555., 555., gray));
+
+    // Light
+    let light_obj = OneWayRectangle::new(2, 213., 343., 227., 332., 554., light_white, false);
+    objects.add(light_obj.clone());
+
+    let chess = OBJModel::load_from_file("raytracer/model/Chess set.obj", glass, 0., 1.);
+    let big_chess = Zoom::new(chess, 4.0);
+    let moved_chess = Rotate::new(
+        Translate::new(Rotate::new(big_chess, 0, 270.), Vec3::new(205., 0., 340.)),
+        1,
+        15.,
+    );
+    world.add(moved_chess);
+
+    // *world = objects;
+    // BVH
+    world.add(BvhNode::new_from_list(objects, 0., 1.));
+
+    // Hittable PDF
+    lights.add(light_obj);
 }

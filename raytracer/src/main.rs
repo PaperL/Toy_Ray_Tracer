@@ -7,7 +7,7 @@ mod scene;
 pub mod texture;
 
 use std::{
-    f64::{consts::PI, INFINITY},
+    f64::INFINITY,
     fmt::Display,
     fs::File,
     process::exit,
@@ -31,7 +31,6 @@ use crate::{
     },
     hittable::{Hittable, HittableList},
     material::ScaRecData,
-    scene::cornell_box_bvh,
 };
 
 //---------------------------------------------------------------------------------
@@ -96,17 +95,17 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 7;
+    const THREAD_NUMBER: usize = 3;
 
     // Image
     const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 2000;
+    const IMAGE_WIDTH: usize = 1500;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
 
-    const SAMPLES_PER_PIXEL: u32 = 1000;
+    const SAMPLES_PER_PIXEL: u32 = 1500;
     const MAX_DEPTH: i32 = 50;
 
-    const HALO_SIZE: i32 = IMAGE_WIDTH as i32 / 10;
+    // const HALO_SIZE: i32 = IMAGE_WIDTH as i32 / 10;
 
     const JPEG_QUALITY: u8 = 100;
 
@@ -177,7 +176,7 @@ fn main() {
         // Secene
         let mut section_world = HittableList::default();
         let mut section_lights = HittableList::default();
-        cornell_box_bvh(&mut section_world, &mut section_lights);
+        scene::paper_world(&mut section_world, &mut section_lights);
 
         let mp = multiprogress.clone();
         let progress_bar = mp.add(ProgressBar::new(
@@ -274,6 +273,7 @@ fn main() {
     );
 
     let mut pixel_id = 0;
+    /*
     let mut halo_cnt = 0;
     let mut light_pixel_cnt = 0;
     let mut halo = vec![vec![RGBColor::default(); IMAGE_WIDTH]; IMAGE_HEIGHT];
@@ -311,7 +311,7 @@ fn main() {
                                 halo_cnt += 1;
                             }
                             halo[ty as usize][tx as usize] += pixel_color / sum
-                                * f64::atan((MAX_MULTIPLE - h) as f64 * (4. / HALO_SIZE as f64))
+                                * f64::atan((MAX_MULTIPLE - h) as f64 * (4. / MAX_MULTIPLE as f64))
                                 * 0.5
                                 / PI;
                         }
@@ -340,11 +340,11 @@ fn main() {
         .yellow(),
     );
 
-    pixel_id = 0;
+    pixel_id = 0;*/
     for y in 0..IMAGE_HEIGHT as u32 {
         for x in 0..IMAGE_WIDTH as u32 {
-            let pixel_color = output_pixel_color[pixel_id].calc_color(SAMPLES_PER_PIXEL)
-                + halo[y as usize][x as usize];
+            let pixel_color = output_pixel_color[pixel_id].calc_color(SAMPLES_PER_PIXEL);
+            // + halo[y as usize][x as usize];
 
             let pixel = img.get_pixel_mut(x, IMAGE_HEIGHT as u32 - y - 1);
             *pixel = image::Rgb(pixel_color.to_u8_array());
@@ -370,7 +370,7 @@ fn main() {
     );
 
     let output_image = image::DynamicImage::ImageRgb8(img);
-    let mut output_file = File::create("output/output.jpg").unwrap();
+    let mut output_file = File::create("raytracer/output/output.jpg").unwrap();
     match output_image.write_to(
         &mut output_file,
         image::ImageOutputFormat::Jpeg(JPEG_QUALITY),
