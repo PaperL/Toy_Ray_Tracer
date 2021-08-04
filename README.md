@@ -15,7 +15,7 @@
 
 ## 当前版本渲染结果效果图
 
-![Output](output/preview.jpg)
+![Preview Image](raytracer/output/preivew.jpg)
 
 > 图为封闭的康奈尔盒子
 >
@@ -63,6 +63,7 @@
   - **basic**
     - `vec3`, `ray`, `camera`, `onb`
   - **hittable**
+    - `obj_model`
     - **instance**
       - `translate`, `rotate`, `motion_translate`, `motion_rotate`, `constant_medium`
     - **object**
