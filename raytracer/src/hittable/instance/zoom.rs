@@ -14,11 +14,11 @@ where
     TH: Hittable,
 {
     pub obj: TH,
-    pub scale: f64,
+    pub scale: Vec3,
 }
 
 impl<TH: Hittable> Zoom<TH> {
-    pub fn new(obj: TH, scale: f64) -> Self {
+    pub fn new(obj: TH, scale: Vec3) -> Self {
         Self { obj, scale }
     }
 }

@@ -8,14 +8,16 @@ use super::vec3::{Point3, Vec3};
 #[derive(Clone, Copy)]
 pub struct Camera {
     orig: Point3,
-    corner: Point3, // lower left corner    画面左下角坐标
-    hor: Vec3,      // horizontal           画面左下角到画面左上角向量
-    ver: Vec3,      // vertical             画面左下角到画面右下角向量
-    u: Vec3,        // u, v, w              用于计算透镜成像相关
-    v: Vec3,        //
-    lens_r: f64,    // lens radius          棱镜半径
-    tm: f64,        // shutter open moment  快门开启时刻
-    dur: f64,       // shutter open time    快门开启时间
+    corner: Point3,  // lower left corner    画面左下角坐标
+    hor: Vec3,       // horizontal           画面左下角到画面左上角向量
+    ver: Vec3,       // vertical             画面左下角到画面右下角向量
+    w: Vec3,         // w                    镜头方向反向
+    u: Vec3,         // u                    镜头方向水平垂直方向
+    v: Vec3,         // v                    镜头方向竖直垂直方向
+    lens_r: f64,     // lens radius          棱镜半径
+    tm: f64,         // shutter open moment  快门开启时刻
+    dur: f64,        // shutter open time    快门开启时间
+    distortion: f64, //                      镜头畸变
 }
 
 impl Camera {
@@ -30,6 +32,7 @@ impl Camera {
         focus_dist: f64,   // 透镜到完美对焦平面的距离
         tm: f64,
         dur: f64,
+        distortion: f64,
     ) -> Self {
         let theta = degree_to_radian(vfov);
         let h = (theta / 2.).tan();
@@ -50,11 +53,13 @@ impl Camera {
             corner,
             hor,
             ver,
+            w,
             u,
             v,
             lens_r: aperture / 2.,
             tm,
             dur,
+            distortion,
         }
     }
 
@@ -62,10 +67,12 @@ impl Camera {
         let rd = Vec3::rand_unit_disk() * self.lens_r;
         let offset = self.u * rd.x + self.v * rd.y;
 
+        let mut dir = self.corner + self.hor * s + self.ver * t - self.orig - offset;
+        dir += (dir.to_unit() + self.w) * dir.length() * self.distortion;
         let mut rnd: ThreadRng = rand::thread_rng();
         Ray::new(
             self.orig + offset,
-            self.corner + self.hor * s + self.ver * t - self.orig - offset,
+            dir,
             rnd.gen_range(self.tm..(self.tm + self.dur)),
         )
     }

@@ -3,7 +3,7 @@
 ## 简介
 
 - 作者：上海交通大学，2020级ACM班，PaperL
-- 版本：`v0.5.3`
+- 版本：`v0.5.4`
 - 说明：2020-2021学年暑期小学期，PPCA课程项目。[本项目题面](https://github.com/aik2mlj/raytracer-tutorial)，[原题面](https://github.com/skyzh/raytracer-tutorial)
 
 - 特别感谢：
@@ -15,9 +15,11 @@
 
 ## 当前版本渲染结果效果图
 
-![Preview Image](raytracer/output/preivew.jpg)
+![preview](raytracer/output/preview.jpg)
 
-> 图为封闭的康奈尔盒子
+> 《NO CODE NO LIFE》
+>
+> 高清图见 Release
 >
 > 编译运行指令 `make run-release`
 
@@ -26,13 +28,12 @@
 ## 主要工作
 
 - [x] 实现 [Ray Tracing in One Weekend 系列教程](https://raytracing.github.io/) Book1~3
-
+- [x] 渲染最终作品
 - 提高代码质量
 
   - [x] 整理源文件结构
   - [x] 规范变量命名
   - [x] 规范浮点数计算，处理精度问题
-
 - 改进算法
 
   - [x] 合并三个方向的 `Rectangle` 类
@@ -43,7 +44,6 @@
   - [x] 实现 `Triangle` 类
   - [x] 扩展 `Instance` 类
   - [ ] 使用过程宏生成静态 BVH 数据，提高渲染效率
-
 - 扩展功能
 
   - [x] 使用 GitHub Action，实现自动根据 tag 将稳定版本代码编译运行，并将生成结果上传至 Release
@@ -65,9 +65,9 @@
   - **hittable**
     - `obj_model`
     - **instance**
-      - `translate`, `rotate`, `motion_translate`, `motion_rotate`, `constant_medium`
+      - `translate`, `rotate`, `motion_translate`, `motion_rotate`, `zoom`,  `constant_medium`
     - **object**
-      - `sphere`, `rectangle`, `cube`, `triangle`
+      - `sphere`, `rectangle`, `cube`, `triangle`, `ring`
   - **bvh**
     - `aabb`, `bvh_node`
   - **material**
@@ -75,7 +75,7 @@
   - **pdf**
     - `cos_pdf`, `hittable_pdf`
   - **texture**
-    - `solid_color`, `image_texture`
+    - `solid_color`, `image_texture`, `checker`, `gradient`
 
 > 自动代码格式化指令 `cargo fmt`
 >
@@ -97,26 +97,3 @@
 4. 提高了关于 GitHub 的熟悉程度
    - GitAction 及 tag 的使用
    - 及时 Commit 稳定代码来帮助快速定位 Bug 或回滚
-
-
-
-
-
-## Commit Checklist
-
-- **New Release?** 
-  - [x] Yes
-  - [ ] No
-
-- **源代码**
-  - [x] `Cargo fmt`
-  - [x] `Cargo Clippy`
-  - [x] 渲染参数*（线程数，分辨率，采样率，图像质量）*
-- **文件**
-  - [x] `output` 文件夹
-- **其他**
-  - [x] `README.md` 版本号
-  - [x] Rust 项目版本号
-  - [x] GitHub Action - Workflow - Release Body
-
-

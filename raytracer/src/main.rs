@@ -63,11 +63,15 @@ fn ray_color(
                     let pdf_val = mixed_pdf.value(&pdf_dir);
                     let scattered = Ray::new(hit_rec.p, pdf_dir, ray.tm);
 
-                    emitted
-                        + sca_rec.attenutaion
-                            * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
-                            * ray_color(&scattered, world, lights, background, depth - 1)
-                            / pdf_val
+                    let k = sca_rec.attenutaion
+                        * hit_rec.mat.scattering_pdf(&ray, &hit_rec, &scattered)
+                        / pdf_val;
+
+                    if k.is_zero() {
+                        emitted
+                    } else {
+                        emitted + k * ray_color(&scattered, world, lights, background, depth - 1)
+                    }
                 }
             }
         } else {
@@ -95,15 +99,15 @@ fn main() {
     );
     let begin_time = Instant::now();
 
-    const THREAD_NUMBER: usize = 3;
+    const THREAD_NUMBER: usize = 7;
 
     // Image
-    const ASPECT_RATIO: f64 = 1.;
-    const IMAGE_WIDTH: usize = 1500;
+    const ASPECT_RATIO: f64 = 16. / 9.;
+    const IMAGE_WIDTH: usize = 1920;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
 
     const SAMPLES_PER_PIXEL: u32 = 1500;
-    const MAX_DEPTH: i32 = 50;
+    const MAX_DEPTH: i32 = 60;
 
     // const HALO_SIZE: i32 = IMAGE_WIDTH as i32 / 10;
 
@@ -128,12 +132,13 @@ fn main() {
     let background = RGBColor::new(0., 0., 0.);
 
     // Camera
-    let look_from = Point3::new(278., 278., -800.);
-    let look_at = Point3::new(278., 278., 0.);
+    let look_from = Point3::new(-850., 80., 0.);
+    let look_at = Point3::new(-780., 530., 800.);
     let vup = Vec3::new(0., 1., 0.);
-    let vfov = 40.;
+    let vfov = 120.;
     let aperture = 0.;
     let focus_dist = 1.;
+    let distortion = -0.05;
 
     // Camera
     let cam = Camera::new(
@@ -146,6 +151,7 @@ fn main() {
         focus_dist,
         0.,
         1.,
+        distortion,
     );
 
     //========================================================
@@ -312,7 +318,7 @@ fn main() {
                             }
                             halo[ty as usize][tx as usize] += pixel_color / sum
                                 * f64::atan((MAX_MULTIPLE - h) as f64 * (4. / MAX_MULTIPLE as f64))
-                                * 0.5
+                                * 2.
                                 / PI;
                         }
                     }

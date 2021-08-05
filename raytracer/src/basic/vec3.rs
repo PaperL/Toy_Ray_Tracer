@@ -59,6 +59,14 @@ impl Vec3 {
         self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
     }
 
+    pub fn pow2(&self) -> Self {
+        Self {
+            x: self.x.powi(2),
+            y: self.y.powi(2),
+            z: self.z.powi(2),
+        }
+    }
+
     pub fn rand_1() -> Self {
         let mut rnd: ThreadRng = rand::thread_rng();
         // todo 令 rnd 为 static 可减少 rand::thread_rng() 开销
@@ -157,6 +165,7 @@ impl RGBColor {
             clamp_hoi((self.x * scale).sqrt() * 256., 0., 256.),
             clamp_hoi((self.y * scale).sqrt() * 256., 0., 256.),
             clamp_hoi((self.z * scale).sqrt() * 256., 0., 256.),
+            // clamp_hoi((self.z * scale).sqrt() * 256., 0., 256.),
         )
     }
 }
@@ -321,12 +330,34 @@ impl Mul<f64> for Vec3 {
     }
 }
 
+impl MulAssign for Vec3 {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = Self {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z,
+        }
+    }
+}
+
 impl MulAssign<f64> for Vec3 {
     fn mul_assign(&mut self, rhs: f64) {
         *self = Self {
             x: self.x * rhs,
             y: self.y * rhs,
             z: self.z * rhs,
+        }
+    }
+}
+
+impl Div for Vec3 {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x / rhs.x,
+            y: self.y / rhs.y,
+            z: self.z / rhs.z,
         }
     }
 }
@@ -339,6 +370,16 @@ impl Div<f64> for Vec3 {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs,
+        }
+    }
+}
+
+impl DivAssign for Vec3 {
+    fn div_assign(&mut self, rhs: Self) {
+        *self = Self {
+            x: self.x / rhs.x,
+            y: self.y / rhs.y,
+            z: self.z / rhs.z,
         }
     }
 }

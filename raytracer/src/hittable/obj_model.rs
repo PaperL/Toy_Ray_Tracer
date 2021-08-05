@@ -12,7 +12,7 @@ pub struct OBJModel {
 }
 
 impl OBJModel {
-    pub fn load_from_file<TM>(file_name: &str, mat: TM, tm: f64, dur: f64) -> Self
+    pub fn load_from_file<TM>(file_name: &str, obj_id: usize, mat: TM, tm: f64, dur: f64) -> Self
     where
         TM: Material + 'static + Clone,
     {
@@ -28,20 +28,11 @@ impl OBJModel {
 
         let (tri, _mtl_mat) = tmp_tri.expect("Failed to load OBJ file.");
 
-        // for item in tri {
-        //     println!("\n\n\nHere's a ITEM\n\n\n");
-        //     let mut cnt = 0;
-        //     for p in item.mesh.positions {
-        //         print!("{} ", p);
-        //         cnt += 1;
-        //         if cnt % 9 == 0 {
-        //             println!("\n");
-        //         }
-        //     }
-        // }
-
         let mut objects = HittableList::default();
-        for obj in tri {
+        for (i, obj) in tri.iter().enumerate() {
+            if i != obj_id && obj_id < tri.len() {
+                continue;
+            }
             let mut cnt = 0;
             let mut pos = [0; 3];
             let mesh = &obj.mesh;
@@ -72,6 +63,7 @@ impl OBJModel {
                     cnt = 0;
                 }
             }
+            break;
         }
 
         Self {
@@ -103,6 +95,6 @@ mod tests {
         let path = env::current_dir().unwrap();
         println!("{}", path.display());
         let white = Lambertian::new_from_color(RGBColor::new(1., 1., 1.));
-        OBJModel::load_from_file("model/Chess set.obj", white, 0., 1.);
+        OBJModel::load_from_file("model/Chess set.obj", 1, white, 0., 1.);
     }
 }

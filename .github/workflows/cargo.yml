@@ -35,27 +35,27 @@ jobs:
     name: Build, Upload and Release
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-        name: Checkout 🛎️
-      - uses: actions-rs/toolchain@v1
-        name: Setup Cargo Toolchain 🛎️
-      # - name: Download Dependencies 🛎️
-      #   run: wget https://github.com/google/fonts/raw/master/ofl/encodesans/static/EncodeSans-Regular.ttf
-      - uses: actions-rs/cargo@v1
-        name: Build 🔧
-        with:
-          command: build
-          args: --release --all-features
-      - uses: actions-rs/cargo@v1
-        name: Run 🔧
-        with:
-          command: run
-          args: --release
-      - uses: actions/upload-artifact@v2
-        name: Upload Artifacts 🚀
-        with:
-          name: output
-          path: output/
+      # - uses: actions/checkout@v2
+      #   name: Checkout 🛎️
+      # - uses: actions-rs/toolchain@v1
+      #   name: Setup Cargo Toolchain 🛎️
+      # # - name: Download Dependencies 🛎️
+      # #   run: wget https://github.com/google/fonts/raw/master/ofl/encodesans/static/EncodeSans-Regular.ttf
+      # - uses: actions-rs/cargo@v1
+      #   name: Build 🔧
+      #   with:
+      #     command: build
+      #     args: --release --all-features
+      # - uses: actions-rs/cargo@v1
+      #   name: Run 🔧
+      #   with:
+      #     command: run
+      #     args: --release
+      # - uses: actions/upload-artifact@v2
+      #   name: Upload Artifacts 🚀
+      #   with:
+      #     name: output
+      #     path: output/
       - name: Create Release 🚀
         id: create_release
         uses: actions/create-release@v1
@@ -67,32 +67,34 @@ jobs:
           # github.ref is tag when trigger is tag
           # or can use ${{ steps.get_version.outputs.VERSION }}
           body: |
-            # 💡 PaperL's Toy Ray Tracer 💡
+            # ♟️ *NO CODE NO LIFE* ♟️
+
+            > PaperL's Toy Ray Tracer Final Scene
 
             ### 📦 渲染参数
 
             - 📷 封闭的康奈尔盒子
-            - 📷 分辨率 1000x1000 px
-            - 📷 JPEG 格式，质量因子 100
-            - 📷 灯光色温 4700K
-            - 🕹️ 像素采样数 1000
-            - 🕹️ 反射递归深度 50
+            - 📷 分辨率 `1920x1080` px
+            - 📷 JPEG 格式，质量因子 `100`
+            - 🕹️ 像素采样数 `1500`
+            - 🕹️ 反射递归深度 `60`
             - 🕹️ 使用用于漫反射材质的 PDF
-            - 🕹️ 使用用于光源以及镜面、玻璃材质的 PDF
 
             ### 🔎 新特性
 
-            - 🚩 支持从 OBJ 格式文件导入模型
+            - 🚩 支持镜头枕形/桶形畸变
+            - 🚩 新增: 圆环、三维缩放、更真实的金属材质、渐变色纹理、网格纹理
+
           draft: false
           prerelease: false
-      - name: Upload Release Asset 🚀
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: raytracer/output/output.jpg
-          asset_name: output.jpg
-          asset_content_type: image/jpg
+      # - name: Upload Release Asset 🚀
+      #   id: upload-release-asset
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: raytracer/output/output.jpg
+      #     asset_name: output.jpg
+      #     asset_content_type: image/jpg
           # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types

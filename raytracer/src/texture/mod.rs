@@ -1,4 +1,6 @@
 // pub mod checker_texture;
+pub mod checker;
+pub mod gradient;
 pub mod image_texture;
 pub mod solid_color;
 
